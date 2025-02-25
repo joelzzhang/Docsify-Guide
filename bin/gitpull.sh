@@ -8,7 +8,7 @@ echo "Current directory: $current_dir"
 cd "${current_dir}/.." || exit 1
 
 # 配置日志文件路径
-LOG_FILE="/var/log/Docsify-Guide/git-pull.log"
+LOG_FILE="/var/log/Docsify-Guide/git-pull-$(date +%Y-%m-%d).log"
 
 # 获取当前时间戳并写入日志
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
