@@ -2,7 +2,7 @@
 
 * 链接到我
   * [关于本人](http://119.28.10.135:3000/#) 
-  * [腾讯元宝大模型](https://yuanbao.tencent.com/chat/naQivTmsDa) 
+  * [腾讯大模型](https://yuanbao.tencent.com/chat/naQivTmsDa) 
   * [AI排行榜](https://www.aipaihangbang.com/) 
 
 
