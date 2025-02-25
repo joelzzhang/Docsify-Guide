@@ -1,7 +1,7 @@
 <!-- _navbar.md -->
 
 * 链接到我
-  * [关于本人](https://mp.weixin.qq.com/s/dCyKG6n6l5ICTl24dKNqbw) 
+  * [关于本人](http://119.28.10.135:3000/#) 
 
 
 * 友情链接
