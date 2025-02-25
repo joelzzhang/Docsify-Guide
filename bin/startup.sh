@@ -5,7 +5,6 @@ if [ "$proc_id" != "" ]; then
     ps -ef |grep -w docsify | grep -v grep | awk '{print $2}' |xargs kill -9
     echo "kill ${proc_id} ${proc_msg}"
 fi
-nohup docsify serve ./docs/ --port 3000 > docsify.log &
-#nohup docsify serve ./docs/ --port 3000 >/dev/null 2>&1 &
+nohup docsify serve /data/workspace/Docsify-Guide --port 3000 > /var/log/Docsify-Guide/docsify.log 2>&1 &
 echo "server started !"
 
