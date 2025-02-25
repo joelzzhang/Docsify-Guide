@@ -2,7 +2,7 @@
 
 # 获取当前脚本所在目录
 current_dir=$(dirname "$0")
-echo "Current directory: $current_dir"
+#echo "Current directory: $current_dir"
 
 # 切换到父目录（脚本所在目录的父目录）
 cd "${current_dir}/.." || exit 1
