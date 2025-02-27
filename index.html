@@ -27,6 +27,9 @@
      main{
         width:100%;
       }
+      a {
+          text-decoration: none;
+      }
     </style>
 </head>
 
@@ -52,7 +55,8 @@
             // 小屏设备下合并导航栏到侧边栏
             mergeNavbar: true,
             alias: {
-                '/.*/_sidebar.md': '/_sidebar.md'
+                '/.*/_sidebar.md': '/_sidebar.md',
+                '/.*/_navbar.md': '/_navbar.md'
             },
             /*搜索相关设置*/
             search: {
