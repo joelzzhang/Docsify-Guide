@@ -1,8 +1,6 @@
 * Docsify使用指南
   * [Docsify使用指南](/ProjectDocs/Docsify使用指南.md)
-  * [Typora+Docsify快速入门](/ProjectDocs/Typora+Docsify快速入门.md)
-  * [Docsify部署教程](/ProjectDocs/Docsify部署教程.md)
-  * [Typora使用教程](/ProjectDocs/Typora+Docsify快速入门.md)
+  * [Typora使用教程](/ProjectDocs/Typora快速入门.md)
 * MacOS手册
   *  [MacOS使用指南](ProjectDocs/mac/mac.md)
 * 运维手册
