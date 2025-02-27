@@ -4,8 +4,11 @@
 * MacOS手册
   *  [MacOS使用指南](ProjectDocs/mac/mac.md)
 * 运维手册
-  *  [MacOS使用指南](ProjectDocs/operations/mac.md)
+  *  [HADOOP高可用集群部署](ProjectDocs/operations/mac.md)
+  *  [Prometheus部署](ProjectDocs/operations/mac.md)
+  *  [Grafana使用手册](ProjectDocs/operations/mac.md)
+  *  [Doris高可用集群部署](ProjectDocs/operations/mac.md)
 * JAVA工程师开发手册
-  *  [MacOS使用指南](ProjectDocs/development/mac.md)
+  *  [Spring源码解读](ProjectDocs/development/mac.md)
 * 大数据开发手册
   *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
