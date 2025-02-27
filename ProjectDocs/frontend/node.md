@@ -1,4 +1,5 @@
-# Nodejs安装V18失败解决方案
+## Nodejs安装V18失败解决方案
+
 ```shell
 [root@172 ~]# npm -v
 node: /lib64/libm.so.6: version `GLIBC_2.27' not found (required by node)
@@ -20,9 +21,9 @@ GLIBC_2.17
 ....
 ```
 
-## 解决办法
+### 解决办法
 
-### 更新glibc
+#### 更新glibc
 
 根据提示 安装所需要的glibc-2.28
 
@@ -34,11 +35,11 @@ cd glibc-2.28/ && mkdir build  && cd build
 ../configure --prefix=/usr --disable-profile --enable-add-ons --with-headers=/usr/include --with-binutils=/usr/bin
 ```
 
-### 可能出现的错误
+#### 可能出现的错误
 
 上步更新glibc 可能会发生错误。如果没有错误 下边这一步 不用看。
 
-#### make问题
+##### make问题
 
 ```shell
 configure: error: 
@@ -136,7 +137,7 @@ node -v
 npm -v
 ```
 
-### 继续更新glibc
+#### 继续更新glibc
 
 make 和 make install在linux中就是安装软件的意思 简单这么理解就好。
 这个过程较长，大约半小时左右，建议打一局游戏就好了。
