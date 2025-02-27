@@ -7,7 +7,7 @@
   *  [MacOS使用指南](ProjectDocs/mac/mac.md)
 * 运维手册
   *  [MacOS使用指南](ProjectDocs/operations/mac.md)
-* 工程师开发手册
+* JAVA工程师开发手册
   *  [MacOS使用指南](ProjectDocs/development/mac.md)
 * 大数据开发手册
   *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
