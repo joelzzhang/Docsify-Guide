@@ -17,5 +17,7 @@
   * [Nodejs使用手册](ProjectDocs/frontend/node.md)
 * JAVA开发手册
   *  [Spring源码解读](ProjectDocs/development/mac.md)
+  *  [Mysql数据库](ProjectDocs/development/mysql.md)
+  *  [Redis知识](ProjectDocs/development/redis.md)
 * 大数据开发手册
   *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
