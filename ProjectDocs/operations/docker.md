@@ -115,7 +115,7 @@
      WantedBy=multi-user.target
      ```
 
-   - 按“**Esc**”键，输入:**wq!**，按“**Enter**”保存并退出编辑
+   - 按“**Esc**”键，输入:“**wq!**”，按“**Enter**”保存并退出编辑
 
 5. 启动Docker服务进程
 
