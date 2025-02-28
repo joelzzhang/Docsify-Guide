@@ -8,6 +8,7 @@
   *  [Prometheus部署](ProjectDocs/operations/prometheus.md)
   *  [Grafana使用手册](ProjectDocs/operations/grafana.md)
   *  [Doris高可用集群部署](ProjectDocs/operations/doris.md)
+  *  [Ansible自动化运维](ProjectDocs/operations/ansible.md)
 * 前端开发手册
   * [Nodejs使用手册](ProjectDocs/frontend/node.md)
 * JAVA开发手册
