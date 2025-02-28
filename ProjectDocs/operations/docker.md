@@ -131,7 +131,7 @@
 
    如下图所示，有Client和Server两部分表示安装成功
 
-   <img src="../../ProjectDocs/images/operations/docker1.png" alt="docker" style="zoom:50%;" /> 
+   ![docker](../images/operations/docker1.png)  
 
 #### yum部署
 
@@ -165,7 +165,7 @@
 
    如下图所示，有Client和Server两部分表示安装成功
 
-   <img src="../../ProjectDocs/images/operations/docker1.png" alt="docker" style="zoom:50%;" /> 
+   ![docker](../images/operations/docker1.png)  
 
 4. 卸载docker引擎
 
