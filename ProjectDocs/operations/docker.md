@@ -33,7 +33,7 @@
 
    **永久方法**
 
-   修改文件 `/etc/selinux/config`，将**`SELINUX=enforcing`**改为**`SELINUX=permissive`**或者**`disabled`**
+   修改文件 `/etc/selinux/config`，将`SELINUX=enforcing`改为`SELINUX=permissive`或者`disabled`
 
    ```shell
    vim /etc/selinux/config
@@ -547,7 +547,7 @@
    
      若访问容器中服务，可以使用这用方式访问 <网络别名>：<服务端口号> 
    
-     推荐使用这种方法，自定义网络，因为使用的是网络别名，可以不用顾虑ip是否变动，只要连接到docker内部bright网络即可互访。bridge也可以建立多个，隔离在不同的网段。
+     推荐使用这种方法，自定义网络，因为使用的是网络别名，可以不用顾虑ip是否变动，只要连接到docker内部bridge网络即可互访。bridge也可以建立多个，隔离在不同的网段。
 
 
 
