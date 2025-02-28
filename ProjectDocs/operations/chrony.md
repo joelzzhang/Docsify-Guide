@@ -1,6 +1,6 @@
 ## chrony简介
 
-- `Chrony`是一个开源的自由软件，它能保持系统时钟与时钟[服务器](https://cloud.tencent.com/act/pro/promotion-cvm?from_column=20065&from=20065)（NTP）同步，让时间保持精确。
+- `Chrony`是一个开源的自由软件，它能保持系统时钟与时钟服务器（NTP）同步，让时间保持精确。
 
 - 它由两个程序组成：`chronyd`和`chronyc`。`chronyd`是一个后台运行的守护进程，用于调整内核中运行的系统时钟和时钟服务器同步。它确定计算机增减时间的比率，并对此进行补偿。
 
@@ -8,7 +8,7 @@
 
 1. 系统版本检查，使用`cat /etc/system-release`
 2. 使用`rpm -qa |grep chrony`查看系统是否已安装 chrony，可看到默认已安装 chrony 的包。
-3. 如果没有安装环境可使用`dnf install chrony`命令安装或者离线下载 rpm 包安装，[下载地址](http://rpm.pbone.net/index.php3?stat=3&limit=2&srodzaj=3&dl=40&search=chrony)，找到对应版本下载即可。
+3. 如果没有安装环境可使用`dnf -y install chrony`命令安装或者离线下载 rpm 包安装，[下载地址](http://rpm.pbone.net/index.php3?stat=3&limit=2&srodzaj=3&dl=40&search=chrony)，找到对应版本下载即可。
 4. 下载完后使用`rpm -ivh chrony-2.1.1-4.el7.centos.x86_64.rpm`安装即可
 
 ## 启用chrony的服务
