@@ -4,11 +4,15 @@
 * MacOS手册
   *  [MacOS使用指南](ProjectDocs/mac/mac.md)
 * 运维手册
+  *  [Kerberos认证](ProjectDocs/operations/kerberos.md)
+  *  [Chrony时钟同步](ProjectDocs/operations/chrony.md)
+  *  [Linux磁盘管理](ProjectDocs/operations/linux-disk.md)
   *  [HADOOP高可用集群部署](ProjectDocs/operations/hadoop.md)
   *  [Prometheus部署](ProjectDocs/operations/prometheus.md)
   *  [Grafana使用手册](ProjectDocs/operations/grafana.md)
   *  [Doris高可用集群部署](ProjectDocs/operations/doris.md)
   *  [Ansible自动化运维](ProjectDocs/operations/ansible.md)
+  *  [Docker运维](ProjectDocs/operations/docker.md)
 * 前端开发手册
   * [Nodejs使用手册](ProjectDocs/frontend/node.md)
 * JAVA开发手册
