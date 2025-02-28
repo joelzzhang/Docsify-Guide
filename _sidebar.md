@@ -4,10 +4,10 @@
 * MacOS手册
   *  [MacOS使用指南](ProjectDocs/mac/mac.md)
 * 运维手册
-  *  [HADOOP高可用集群部署](ProjectDocs/operations/mac.md)
-  *  [Prometheus部署](ProjectDocs/operations/mac.md)
-  *  [Grafana使用手册](ProjectDocs/operations/mac.md)
-  *  [Doris高可用集群部署](ProjectDocs/operations/mac.md)
+  *  [HADOOP高可用集群部署](ProjectDocs/operations/hadoop.md)
+  *  [Prometheus部署](ProjectDocs/operations/prometheus.md)
+  *  [Grafana使用手册](ProjectDocs/operations/grafana.md)
+  *  [Doris高可用集群部署](ProjectDocs/operations/doris.md)
 * 前端开发手册
   * [Nodejs使用手册](ProjectDocs/frontend/node.md)
 * JAVA开发手册
