@@ -131,7 +131,7 @@
 
    如下图所示，有Client和Server两部分表示安装成功
 
-   <img src="D:\Workspace\IdeaProjects\Docsify-Guide\ProjectDocs\images\operations\docker1.png" alt="docker" style="zoom:50%;" /> 
+   <img src="images/operations/docker1.png" alt="docker" style="zoom:50%;" /> 
 
 #### yum部署
 
