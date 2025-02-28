@@ -8,7 +8,7 @@
    sudo yum update
    ```
 
-2. 安装需要的软件包，yum-util 提供yum-config-manager功能，另外两个是devicemapper驱动依赖的
+2. 安装需要的软件包，`yum-util` 提供`yum-config-manager`功能，另外两个是devicemapper驱动依赖的
 
    ```shell
    sudo yum install -y yum-utils device-mapper-persistent-data lvm2
@@ -33,7 +33,7 @@
 
    **永久方法**
 
-   修改文件 `/etc/selinux/config`，将**SELINUX=enforcing**改为**SELINUX=permissive**或者**disabled**
+   修改文件 `/etc/selinux/config`，将**`SELINUX=enforcing`**改为**`SELINUX=permissive`**或者**`disabled`**
 
    ```shell
    vim /etc/selinux/config
@@ -85,7 +85,7 @@
 
 4. 配置`docker.service`文件
 
-   - 编辑docker.service文件
+   - 编辑`docker.service`文件
 
      ```shell
      vim /usr/lib/systemd/system/docker.service
@@ -494,11 +494,11 @@
      docker run -di -v /usr/local/myhtml:/usr/local/myhtml --name=mycentos3 centos:7
      ```
    
-     默认挂载的路径权限为读写。如果指定为只读可以用：ro，如：/usr/local/myhtml:/usr/local/myhtml:ro
+     默认挂载的路径权限为读写。如果指定为只读可以用：ro，如：`/usr/local/myhtml:/usr/local/myhtml:ro`
    
      如果你共享的是多级的目录，可能会出现权限不足的提示。
    
-     这是因为centos7中的安全模块selinux把权限禁掉了，我们需要添加参数 --privileged=true来解决挂载的目录没有权限的问题
+     这是因为centos7中的安全模块selinux把权限禁掉了，我们需要添加参数 `--privileged=true`来解决挂载的目录没有权限的问题
    
      查看容器IP地址
    
@@ -530,7 +530,7 @@
    
      查询到新创建的bridge testnet :`docker network ls`
    
-     运行容器连接到testnet网络:docker run -it --name <容器名> ---network <bridge> --network-alias <网络别名> <镜像名>，如：
+     运行容器连接到testnet网络:`docker run -it --name <容器名> ---network <bridge> --network-alias <网络别名> <镜像名>`，如：
    
      ```shell
      docker run -it --name centos-1 --network testnet --network-alias centos-1 docker.io/centos:latest
@@ -605,12 +605,12 @@ docker build -t image_name:tag -f /PATH/TO/Dockerfile
    
    --例如
    docker run -di --name=tensquare_mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 centos/mysql-57-centos7
-   docker run -di --name mysql -p 3306:3306 -v /data/mysql/conf:/etc/mysql/conf.d -v /data/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD='1qaz!QAZ' mysql:latest --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+   docker run -di --name mysql -p 3306:3306 -v /data/mysql/conf:/etc/mysql/conf.d -v /data/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD='password' mysql:latest --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
    ```
 
    -p，代表端口映射，格式为宿主机映射端口：容器运行端口
 
-   -e，代表添加环境变量 MYSQL_ROOT_PASSWORD是root用户的登陆密码
+   -e，代表添加环境变量 `MYSQL_ROOT_PASSWORD`是`root`用户的登陆密码
 
 3. 进入mysql容器
 
@@ -681,7 +681,7 @@ docker build -t image_name:tag -f /PATH/TO/Dockerfile
 2. 创建容器
 
    ```shell
-   docker run -d --name redis -p 6379:6379 -v /data/redis/data:/data -v /data/redis/conf:/usr/local/etc/redis redis:6.0 redis-server /usr/local/etc/redis/redis.conf --appendonly yes  --requirepass '1qaz!QAZ' --save 60 1 --loglevel warning
+   docker run -d --name redis -p 6379:6379 -v /data/redis/data:/data -v /data/redis/conf:/usr/local/etc/redis redis:6.0 redis-server /usr/local/etc/redis/redis.conf --appendonly yes  --requirepass 'password' --save 60 1 --loglevel warning
    ```
    
    `redis.conf`要将`bind`改成 `0.0.0.0`，不然访问不了
@@ -808,7 +808,7 @@ services:
           unzip /certs/bundle.zip -d /certs; 
         fi;
         if [[ ! -f /certs/certificate.zip ]]; then
-          bin/elasticsearch-certutil cert --silent -ca-cert /certs/ca/ca.crt -ca-key /certs/es01/es01.key --pass '1qaz!QAZ' --in config/certificates/instances.yml --days 3650 -out /certs/certificate.zip;
+          bin/elasticsearch-certutil cert --silent -ca-cert /certs/ca/ca.crt -ca-key /certs/es01/es01.key --pass 'password' --in config/certificates/instances.yml --days 3650 -out /certs/certificate.zip;
           unzip /certs/certificate.zip -d /certs; 
           rm -rf /certs/certificate.zip;
         fi;
@@ -819,8 +819,6 @@ services:
     volumes: ['certs:/certs', '.:/usr/share/elasticsearch/config/certificates']
 
 volumes: {"certs"}
-
-
 ```
 
 `.env`
@@ -828,7 +826,7 @@ volumes: {"certs"}
 ```properties
 COMPOSE_PROJECT_NAME=es 
 CERTS_DIR=/usr/share/elasticsearch/config/certificates 
-ELASTIC_PASSWORD=1qaz!QAZ
+ELASTIC_PASSWORD=password
 ```
 
 `docker-compose.yaml`
@@ -894,9 +892,9 @@ services:
       SW_STORAGE_ES_HTTP_PROTOCOL: https
       SW_STORAGE_ES_CLUSTER_NODES: es01:9200
       SW_STORAGE_ES_SSL_JKS_PATH: "/app/skywalking/config/certs/es01/es01.jks"
-      SW_STORAGE_ES_SSL_JKS_PASS: "1qaz!QAZ"
+      SW_STORAGE_ES_SSL_JKS_PASS: "password"
       SW_ES_USER: elastic
-      SW_ES_PASSWORD: "1qaz!QAZ"
+      SW_ES_PASSWORD: "password"
       SW_STORAGE_DAY_STEP: 1
       SW_CORE_RECORD_DATA_TTL: 3
       SW_HEALTH_CHECKER: default
@@ -991,7 +989,7 @@ services:
 ```shell
 docker-compose -f create-certs.yml run --rm create_certs
 docker-compose up -d
-bin/elasticsearch-users useradd admin -p '1qaz!QAZ' -r superuser
+bin/elasticsearch-users useradd admin -p 'password' -r superuser
 bin/elasticsearch-users list
 mkdir -p /data/docker/lib/volumes/es_skywalking-config/_data/certs/es01
 cd /data/docker/lib/volumes/es_skywalking-config/_data/certs
@@ -1000,7 +998,7 @@ cd es01
 /usr/local/java/TencentKona-8.0.11-345/jre/bin/keytool -importkeystore -srckeystore es01.p12 -srcstoretype pkcs12 -destkeystore es01.jks -deststoretype JKS
 /usr/local/java/TencentKona-8.0.11-345/jre/bin/keytool -importkeystore -srckeystore es01.jks -destkeystore es01.jks -deststoretype pkcs12
 docker-compose up -d
-docker run --rm -v es_certs:/certs --network=es_default docker.elastic.co/elasticsearch/elasticsearch:7.5.2 curl --cacert /certs/ca/ca.crt -u elastic:1qaz!QAZ https://es01:9200
+docker run --rm -v es_certs:/certs --network=es_default docker.elastic.co/elasticsearch/elasticsearch:7.5.2 curl --cacert /certs/ca/ca.crt -u elastic:password https://es01:9200
 docker-compose -f docker-compose-mysqld-exporter.yaml up -d
 docker compose --file '/data/skywalking/docker-compose-mysqld-exporter.yaml' --project-name 'es' down
 
@@ -1008,7 +1006,7 @@ docker compose --file '/data/skywalking/docker-compose-mysqld-exporter.yaml' --p
 #第一步：下载一个license.json
 https://license.elastic.co/registration
 #第二步：查看当前证书有效期
-curl --cacert /usr/share/elasticsearch/config/certificates/ca/ca.crt -u admin:'1qaz!QAZ' 'https://es01:9200/_license'
+curl --cacert /usr/share/elasticsearch/config/certificates/ca/ca.crt -u admin:'password' 'https://es01:9200/_license'
 {
   "license" : {
     "status" : "expired",
@@ -1026,7 +1024,7 @@ curl --cacert /usr/share/elasticsearch/config/certificates/ca/ca.crt -u admin:'1
 }
 #第三步：上传证书到服务器
 #第四步：更新es的证书
-curl -X POST --cacert /usr/share/elasticsearch/config/certificates/ca/ca.crt -u admin:'1qaz!QAZ' 'https://es01:9200/_license/start_basic?acknowledge=true' -H "Content-Type: application/json" -d @license.json
+curl -X POST --cacert /usr/share/elasticsearch/config/certificates/ca/ca.crt -u admin:'password' 'https://es01:9200/_license/start_basic?acknowledge=true' -H "Content-Type: application/json" -d @license.json
 #第五步：验证更新后的证书是否生效
 {
   "license" : {
@@ -1111,8 +1109,8 @@ services:
       - 'postgresql_data:/bitnami/postgresql'
     environment:
       - POSTGRESQL_USERNAME=root
-      - "POSTGRESQL_PASSWORD=1qaz!QAZ"
-      - "POSTGRESQL_POSTGRES_PASSWORD=1qaz!QAZ"
+      - "POSTGRESQL_PASSWORD=password"
+      - "POSTGRESQL_POSTGRES_PASSWORD=password"
       - POSTGRESQL_DATABASE=actuator
 
 volumes:
@@ -1123,5 +1121,5 @@ volumes:
 #### mariaDB部署
 
 ```shell
-docker run -di --name mariadb -p 23306:3306 -v /my/own/datadir:/var/lib/mysql -v /my/custom:/etc/mysql/conf.d -e MARIADB_ROOT_PASSWORD='1qaz!QAZ' mariadb:10.10
+docker run -di --name mariadb -p 23306:3306 -v /my/own/datadir:/var/lib/mysql -v /my/custom:/etc/mysql/conf.d -e MARIADB_ROOT_PASSWORD='password' mariadb:10.10
 ```
