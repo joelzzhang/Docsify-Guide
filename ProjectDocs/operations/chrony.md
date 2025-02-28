@@ -1,315 +1,142 @@
-## Docsify使用指南
+## chrony简介
 
-![image-20211016010648260](images/image-20211016010648260.png)
+- `Chrony`是一个开源的自由软件，它能保持系统时钟与时钟[服务器](https://cloud.tencent.com/act/pro/promotion-cvm?from_column=20065&from=20065)（NTP）同步，让时间保持精确。
 
-## Node.js 安装配置
+- 它由两个程序组成：`chronyd`和`chronyc`。`chronyd`是一个后台运行的守护进程，用于调整内核中运行的系统时钟和时钟服务器同步。它确定计算机增减时间的比率，并对此进行补偿。
 
-* [nodejs下载地址](http://nodejs.cn/download/)
+## chrony安装
 
-* [Node.js最新最详细安装教程](https://blog.csdn.net/Small_Yogurt/article/details/104968169)
+1. 系统版本检查，使用`cat /etc/system-release`
+2. 使用`rpm -qa |grep chrony`查看系统是否已安装 chrony，可看到默认已安装 chrony 的包。
+3. 如果没有安装环境可使用`dnf install chrony`命令安装或者离线下载 rpm 包安装，[下载地址](http://rpm.pbone.net/index.php3?stat=3&limit=2&srodzaj=3&dl=40&search=chrony)，找到对应版本下载即可。
+4. 下载完后使用`rpm -ivh chrony-2.1.1-4.el7.centos.x86_64.rpm`安装即可
 
-![image-20211001044346349](images/image-20211001044346349.png)
+## 启用chrony的服务
 
-win+r：cmd进入命令提示符窗口，分别输入以下命令查看node和npm的版本能够正常显示版本号，则安装成功：
+- 服务状态
 
-- node -v：显示安装的nodejs版本
-- npm -v：显示安装的npm版本
+  ```shell
+  rpm -qa chrony
+  #启动chrony服务
+  systemctl start chronyd.service
+  #设置开机同步时间
+  systemctl enable chronyd.service
+  #查看服务状态
+  systemctl status chronyd.service
+  ```
 
-![image-20211001044742251](images/image-20211001044742251.png)
+-  直接关闭防火墙
 
+  ```shell
+  #停止firewalld
+  systemctl stop firewalld.service     
+  #禁止firewalld开机启动
+  systemctl disable firewalld.service  
+  ```
 
+-  不关闭防火墙、但允许NTP服务
 
-## docsify-cli工具安装
+  ```shell
+  firewall-cmd --add-service=ntp --permanent
+  firewall-cmd --reload
+  ### 因NTP使用123/UDP端口协议，所以允许NTP服务即可
+  ```
 
-> 推荐全局安装 `docsify-cli` 工具，可以方便地创建及在本地预览生成的文档。
+## 服务端和客户端chrony配置
 
-``` javascript
-npm i docsify-cli -g
-```
+### 服务端配置
 
-![image-20211001045416111](images/image-20211001045416111.png)
+1. 配置文件修改
 
+   `vi /etc/chrony.conf`
 
+   ```shell
+   #将所有server都注释掉
+   #iburst表示的是首次同步的时候快速同步
+   # server 3.centos.pool.ntp.org iburst
+   
+   #根据实际时间计算出服务器增减时间的比率，然后记录到一个文件中，在系统重启后为系统做出最佳时间 补偿调整。
+   driftfile /var/lib/chrony/drift
+   
+   # 启用实时时钟（RTC）的内核同步。
+   # Enable kernel synchronization of the real-time clock (RTC).
+   rtcsync
+   
+   #打开allow或配置允许访问的客户端列表，支持CIDR
+   # Allow NTP client access from local network.
+   allow 192.168.0.0/16
+   allow
+   
+   #打开local stratum 10注释 即使server端无法从互联网同步时间，也同步本机时间至client
+   # Serve time even if not synchronized to a time source.
+   local stratum 10
+   ```
 
-## 项目初始化
+   服务端只修改以上配置即可，其他的保持不变。
 
-> 如果想在项目的 `./docs(文件名可以按自己的想法来)` 目录里写文档，直接通过 `init` 初始化项目。
+2. 重启下服务端chrony服务，使用`systemctl restart chronyd.service`重启即可。
 
-``` javascript
-docsify init ./Docsify-Guide
-```
+### 客户端配置
 
+1. 配置文件修改
 
+   `vim /etc/chrony.conf`
 
-初始化成功后，可以看到 `./docs` 目录下创建的几个文件
+   修改 server 即可，删掉其他的，添加要同步时间的源服务器ip，格式如下:
 
-- `index.html` 入口文件
-- `README.md` 会做为主页内容渲染
-- `.nojekyll` 用于阻止 GitHub Pages 忽略掉下划线开头的文件
+   ```shell
+   server 10.10.10.3 iburst
+   ```
 
-直接编辑 `docs/README.md` 就能更新文档内容，当然也可以[添加更多页面](https://docsify.js.org/#/zh-cn/more-pages)。
+2. 重启下客户端 chrony 服务，使用`systemctl restart chronyd.service`重启即可。
 
+3. 客户端时间同步
 
+   ```shell
+   chronyc sources -v
+   chronyc sourcestats
+   ```
 
-## 本地运行docsify创建的项目
+### chrony配置参数说明
 
-> 通过运行 `docsify serve 项目名称 ` 启动一个本地服务器，可以方便地实时预览效果。默认访问地址 [http://localhost:3000](http://localhost:3000/) 。
+| 参数             | 参数说明                                                     |
+| ---------------- | ------------------------------------------------------------ |
+| server           | 该参数可以多次用于添加时钟服务器，必须以"server "格式使用。一般而言，你想添加多少服务器，就可以添加多少服务器 |
+| stratumweight    | stratumweight指令设置当chronyd从可用源中选择同步源时，每个层应该添加多少距离到同步距离。默认情况下，CentOS中设置为0，让chronyd在选择源时忽略源的层级 |
+| driftfile        | chronyd程序的主要行为之一，就是根据实际时间计算出计算机增减时间的比率，将它记录到一个文件中是最合理的，它会在重启后为系统时钟作出补偿，甚至可能的话，会从时钟服务器获得较好的估值 |
+| rtcsync          | rtcsync指令将启用一个内核模式，在该模式中，系统时间每11分钟会拷贝到实时时钟（RTC） |
+| allow/deny       | 这里你可以指定一台主机、子网，或者网络以允许或拒绝NTP连接到扮演时钟服务器的机器 |
+| cmdallow/cmddeny | 跟上面相类似，只是你可以指定哪个IP地址或哪台主机可以通过chronyd使用控制命令 |
+| bindcmdaddress   | 该指令允许你限制chronyd监听哪个网络接口的命令包（由chronyc执行）。该指令通过cmddeny机制提供了一个除上述限制以外可用的额外的访问控制等级 |
+| makestep         | 通常，chronyd将根据需求通过减慢或加速时钟，使得系统逐步纠正所有时间偏差。在某些特定情况下，系统时钟可能会漂移过快，导致该调整过程消耗很长的时间来纠正系统时钟。该指令强制chronyd在调整期大于某个阀值时步进调整系统时钟，但只有在因为chronyd启动时间超过指定限制（可使用负值来禁用限制），没有更多时钟更新时才生效 |
 
-``` javascript
-docsify serve Docsify-Guide
-```
+### chronyc命令参数说明
 
-![image-20211010124211458](images/image-20211010124211458.png)
+| 参数       | 参数说明                         |
+| :--------- | :------------------------------- |
+| accheck    | 检查NTP访问是否对特定主机可用    |
+| activity   | 该命令会显示有多少NTP源在线/离线 |
+| add server | 手动添加一台新的NTP服务器。      |
+| clients    | 在客户端报告已访问到服务器       |
+| delete     | 手动移除NTP服务器或对等服务器    |
+| settime    | 手动设置守护进程时间             |
+| tracking   | 显示系统时间信息                 |
 
-## Linux下后台部署项目
-在Linux下如果使用下面的命令启动docsify，会发现一旦关闭了xShell，那么就访问不了了，具体问题还不清楚，下面说种可以在后台运行的方法；
+## 常用命令
+
 ```shell
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
+#查看时间同步源
+chronyc sources -v
+#立即手工同步
+chronyc -a makestep
+#查看时间同步源状态
+chronyc sourcestats -v
+#设置硬件时间,硬件时间默认为UTC：
+timedatectl set-local-rtc 1
+#启用NTP时间同步
+timedatectl set-ntp yes
+#校准时间服务器
+chronyc tracking
+#最后需要注意的是，配置完/etc/chrony.conf后，需重启chrony服务，否则可能会不生效。
 ```
-通过编写shell脚本，将上面代码放到脚本里面，再启动就可以了；    
-1、创建脚本：vim start_docsify.sh
-```shell
-#! bin/bash
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
-```
-2、启动脚本
-```shell
-bash start_docsify.sh
-```
-
-## 基础配置文件介绍
-
-> 其实我们维护一份轻量级的个人&团队文档我们只需要配置以下这几个基本文件就可以了。
-
-|        文件作用        |     文件      |
-| :--------------------: | :-----------: |
-| 基础配置项（入口文件） |  index.html   |
-|      封面配置文件      | _coverpage.md |
-|     侧边栏配置文件     |  _sidebar.md  |
-|     导航栏配置文件     |  _navbar.md   |
-|    主页内容渲染文件    |   README.md   |
-|       浏览器图标       |  favicon.ico  |
-
-
-
-## 基础配置项（index.html）
-
-> 下面是一份基础的配置项模板如下(可直接Copy使用)。
-
-``` html
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Docsify-Guide</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="description" content="Description">
-    <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <!-- 设置浏览器图标 -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-    <!-- 默认主题 -->
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
-</head>
-
-<body>
-    <!-- 定义加载时候的动作 -->
-    <div id="app">加载中...</div>
-    <script>
-        window.$docsify = {
-            // 项目名称
-            name: 'Docsify-Guide',
-            // 仓库地址，点击右上角的Github章鱼猫头像会跳转到此地址
-            repo: 'https://github.com/YSGStudyHards',
-            // 侧边栏支持，默认加载的是项目根目录下的_sidebar.md文件
-            loadSidebar: true,
-            // 导航栏支持，默认加载的是项目根目录下的_navbar.md文件
-            loadNavbar: true,
-            // 封面支持，默认加载的是项目根目录下的_coverpage.md文件
-            coverpage: true,
-            // 最大支持渲染的标题层级
-            maxLevel: 5,
-            // 自定义侧边栏后默认不会再生成目录，设置生成目录的最大层级（建议配置为2-4）
-            subMaxLevel: 4,
-            // 小屏设备下合并导航栏到侧边栏
-            mergeNavbar: true,
-        }
-    </script>
-    <script>
-        // 搜索配置(url：https://docsify.js.org/#/zh-cn/plugins?id=%e5%85%a8%e6%96%87%e6%90%9c%e7%b4%a2-search)
-        window.$docsify = {
-            search: {
-                maxAge: 86400000,// 过期时间，单位毫秒，默认一天
-                paths: auto,// 注意：仅适用于 paths: 'auto' 模式
-                placeholder: '搜索',
-                // 支持本地化
-                placeholder: {
-                    '/zh-cn/': '搜索',
-                    '/': 'Type to search'
-                },
-                noData: '找不到结果',
-                depth: 4,
-                hideOtherSidebarContent: false,
-                namespace: 'Docsify-Guide',
-            }
-        }
-    </script>
-    <!-- docsify的js依赖 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-    <!-- emoji表情支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
-    <!-- 图片放大缩小支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
-    <!-- 搜索功能支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
-    <!--在所有的代码块上添加一个简单的Click to copy按钮来允许用户从你的文档中轻易地复制代码-->
-    <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-</body>
-
-</html>
-```
-
-
-
-## 封面配置文件（_coverpage.md）
-
-> [Docsify官网封面配置教程](https://docsify.js.org/#/zh-cn/cover)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    coverpage: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-
-
-**_coverpage.md**
-
-``` markdown
-<!-- _coverpage.md -->
-
-# Docsify使用指南 
-
-> 💪Docsify使用指南，使用Typora+Docsify打造最强、最轻量级的个人&团队文档。
-
- 简单、轻便 (压缩后 ~21kB)
-- 无需生成 html 文件
-- 众多主题
-
-
-[开始使用 Let Go](/README.md)
-```
-
-![image-20211016010808681](images/image-20211016010808681.png)
-
-## 侧边栏配置文件（_sidebar.md）
-
-> [Docsify官网配置侧边栏教程](https://docsify.js.org/#/zh-cn/more-pages?id=%e5%ae%9a%e5%88%b6%e4%be%a7%e8%be%b9%e6%a0%8f)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    loadSidebar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-> 在index.html基础配置文件中设置了二级目录
-
-![image-20211010133908643](images/image-20211010133908643.png)
-
-**_sidebar.md**
-
-``` markdown
-<!-- _sidebar.md -->
-
-* Typora+Docsify使用指南
-  * [Docsify使用指南](/ProjectDocs/Docsify使用指南.md) <!--注意这里是相对路径-->
-  * [Typora+Docsify快速入门](/ProjectDocs/Typora+Docsify快速入门.md)
-* Docsify部署
-  * [Docsify部署教程](/ProjectDocs/Docsify部署教程.md)
-
-```
-
-![image-20211010140836290](images/image-20211010140836290.png)
-
-## 导航栏配置文件（_navbar.md）
-
-> [Docsify官网配置导航栏教程](https://docsify.js.org/#/zh-cn/custom-navbar?id=%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    loadNavbar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-
-
-**_navbar.md**
-
-``` markdown
-<!-- _navbar.md -->
-
-* 链接到我
-  * [博客园地址](https://www.cnblogs.com/Can-daydayup/)
-  * [Github地址](https://github.com/YSGStudyHards)
-  * [知乎地址](https://www.zhihu.com/people/ysgdaydayup)
-  * [掘金地址](https://juejin.cn/user/2770425031690333/posts)
-  * [Gitee地址](https://gitee.com/ysgdaydayup)
-
-
-* 友情链接
-  * [Docsify](https://docsify.js.org/#/)
-  * [博客园](https://www.cnblogs.com/)
-
-
-```
-
-![image-20211016010857082](images/image-20211016010857082.png)
-
-
-
-## 全文搜索 - Search
-
-[全文搜索 - Search](https://docsify.js.org/#/zh-cn/plugins?id=全文搜索-search)
-
-
-
-## Docsify主题切换
-
-> 注意：切换主题只需要在根目录的index.html切换对应的主题css文件即可
-
-https://docsify.js.org/#/zh-cn/themes
-
-
-
-## 相关教程
-
-* [docsify-github地址](https://github.com/docsifyjs/docsify/#showcase)
-* [docsify快速开始-官方教程](https://docsify.js.org/#/zh-cn/quickstart)
-* [使用开源文档工具docsify，用写博客的姿势写文档](https://www.cnblogs.com/throwable/p/13605289.html)
-* [Docsify使用指南（打造最强、最轻量级的个人&团队文档）](https://www.cnblogs.com/Can-daydayup/p/15413267.html)
-
-
 
