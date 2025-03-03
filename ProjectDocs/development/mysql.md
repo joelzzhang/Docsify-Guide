@@ -155,7 +155,7 @@ B+Tree是在B-Tree基础上的一种优化，使其更适合实现外存储索�
 
 由于数据还比较少，一个页就能容下，所以只有一个根结点，主键和数据也都是保存在根结点（左边的数字代表主键，右边名字、性别代表具体的数据）。假设我们写入10条数据之后，Page1满了，再写入新的数据会怎么存放呢？我们继续看下图
 
-  ![mysql](/Users/joelzhang/IdeaProjects/workspace/Docsify-Guide/ProjectDocs/images/development/mysql/669.png)  
+  ![mysql](../images/development/mysql/669.png)  
 
 有个叫“秦寿生”的朋友来了，但是Page1已经放不下数据了，这时候就需要进行页分裂，产生一个新的Page。在innodb中的流程是怎么样的呢？
 
@@ -175,7 +175,7 @@ B+Tree是在B-Tree基础上的一种优化，使其更适合实现外存储索�
 
    如果是这样的话新的页空间利用率只有50%，并且会导致更为频繁的页分裂。所以innodb对这一点做了优化，新的数据放入新创建的页，不移动原有页面的任何记录。随着数据的不断写入，这棵树也逐渐枝繁叶茂，如下图
 
- ![mysql](/Users/joelzhang/IdeaProjects/workspace/Docsify-Guide/ProjectDocs/images/development/mysql/670.png) 
+ ![mysql](../images/development/mysql/670.png) 
 
 每次新增数据，都是将一个页写满，然后新创建一个页继续写，这里其实是有个隐含条件的，那就是**主键自增**！主键自增写入时新插入的数据不会影响到原有页，插入效率高！且页的利用率高！但是如果主键是无序的或者随机的，那每次的插入可能会导致原有页频繁的分裂，影响插入效率！降低页的利用率！**这也是为什么在innodb中建议设置主键自增的原因！**
 
