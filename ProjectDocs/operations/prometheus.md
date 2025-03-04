@@ -176,7 +176,7 @@ Prometheus会将所有采集到的样本数据以时间序列（time-series）�
 - 时间戳(timestamp)：一个精确到毫秒的时间戳;
 - 样本值(value)： 一个float64的浮点型数据表示当前样本的值。
 
-```html
+```ini
 <--------------- metric ---------------------><-timestamp -><-value->
 http_request_total{status="200", method="GET"}@1434417560938 => 94355
 http_request_total{status="200", method="GET"}@1434417561287 => 94334
@@ -192,7 +192,7 @@ http_request_total{status="200", method="POST"}@1434417561287 => 4785
 
 在形式上，所有的指标(Metric)都通过如下格式标示：
 
-```
+```ini
 <metric name>{<label name>=<label value>, ...}
 ```
 
@@ -204,19 +204,19 @@ http_request_total{status="200", method="POST"}@1434417561287 => 4785
 
 其中以`__`作为前缀的标签，是系统保留的关键字，只能在系统内部使用。标签的值则可以包含任何Unicode编码的字符。在Prometheus的底层实现中指标名称实际上是以`__name__=<metric name>`的形式保存在数据库中的，因此以下两种方式均表示的同一条time-series：
 
-```html
+```ini
 api_http_requests_total{method="POST", handler="/messages"}
 ```
 
 等同于：
 
-```html
+```ini
 {__name__="api_http_requests_total"，method="POST", handler="/messages"}
 ```
 
 在Prometheus源码中也可以指标(Metric)对应的数据结构，如下所示：
 
-```javascript
+```ini
 type Metric LabelSet
 
 type LabelSet map[LabelName]LabelValue
@@ -236,13 +236,13 @@ Counter是一个简单但有强大的工具，例如我们可以在应用程序�
 
 例如，通过`rate()`函数获取HTTP请求量的增长率：
 
-```
+```ini
 rate(http_requests_total[5m])
 ```
 
 查询当前系统中，访问量前10的HTTP地址：
 
-```
+```ini
 topk(10, http_requests_total)
 ```
 
@@ -252,19 +252,19 @@ topk(10, http_requests_total)
 
 通过Gauge指标，用户可以直接查看系统的当前状态：
 
-```
+```ini
 node_memory_MemFree
 ```
 
 对于Gauge类型的监控指标，通过PromQL内置函数`delta()`可以获取样本在一段时间返回内的变化情况。例如，计算CPU温度在两个小时内的差异：
 
-```
+```ini
 delta(cpu_temp_celsius{host="zeus"}[2h])
 ```
 
 还可以使用`deriv()`计算样本的线性回归模型，甚至是直接使用`predict_linear()`对数据的变化趋势进行预测。例如，预测系统磁盘空间在4个小时之后的剩余情况：
 
-```
+```ini
 predict_linear(node_filesystem_free{job="node"}[1h], 4 * 3600)
 ```
 
@@ -278,7 +278,7 @@ predict_linear(node_filesystem_free{job="node"}[1h], 4 * 3600)
 
 例如，指标`prometheus_tsdb_wal_fsync_duration_seconds`的指标类型为Summary。 它记录了Prometheus Server中wal_fsync处理的处理时间，通过访问Prometheus Server的`/metrics`地址，可以获取到以下监控样本数据：
 
-```html
+```ini
 # HELP prometheus_tsdb_wal_fsync_duration_seconds Duration of WAL fsync.
 # TYPE prometheus_tsdb_wal_fsync_duration_seconds summary
 prometheus_tsdb_wal_fsync_duration_seconds{quantile="0.5"} 0.012352463
@@ -292,7 +292,7 @@ prometheus_tsdb_wal_fsync_duration_seconds_count 216
 
 在Prometheus Server自身返回的样本数据中，我们还能找到类型为Histogram的监控指标`prometheus_tsdb_compaction_chunk_range_bucket`。
 
-```html
+```ini
 # HELP prometheus_tsdb_compaction_chunk_range Final time range of chunks on their first compaction
 # TYPE prometheus_tsdb_compaction_chunk_range histogram
 prometheus_tsdb_compaction_chunk_range_bucket{le="100"} 0
@@ -334,7 +334,7 @@ prometheus_tsdb_compaction_chunk_range_count 780
 
   创建数据存放目录
 
-  ```shell
+  ```bash
   [root@test03 ~]# mkdir -p /data01
   ```
 
