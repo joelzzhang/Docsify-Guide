@@ -328,6 +328,310 @@ prometheus_tsdb_compaction_chunk_range_count 780
 
 ## 部署安装
 
+### 准备工作
+
+- 数据盘准备
+
+  创建数据存放目录
+
+  ```shell
+  [root@test03 ~]# mkdir -p /data01
+  ```
+
+  格式化和挂载
+
+  ```shell
+  [root@test03 ~]# mkfs.xfs -f /dev/sdb && mount /dev/sdb /data01
+  ```
+
+  设置开机自动挂载
+
+  ```shell
+  #第一种方式使用blkid的到UUID，然后将该UUID写入到/etc/fstab文件中去
+  [root@test03 ~]# blkid
+  /dev/sda: UUID="9c9b020b-a6f5-4021-911a-26810d129eb6" BLOCK_SIZE="4096" TYPE="xfs"
+  ......
+  [root@test03 ~]# vim /etc/fstab
+  UUID=9c9b020b-a6f5-4021-911a-26810d129eb6 /data01 xfs defaults 0 0
+  
+  #第二种方式直接将设备和挂载目录的映射写到/etc/fstab文件中去
+  [root@test03 ~]# vim /etc/fstab
+  /dev/sda /data01 xfs defaults 0 0
+  ```
+
+  创建prometheus数据存储目录
+
+  ```shell
+  [root@test03 ~]# mkdir -p /data01/prometheus
+  ```
+
+- 创建prometheus用来启动prometheus
+
+  ```shell
+  [root@test03 ~]# useradd prometheus
+  [root@test03 ~]# echo "password" | sudo passwd --stdin prometheus
+  ```
+
+### 离线安装
+
+1. 安装包准备
+
+   - 在线获取
+
+     ```shell
+     wget https://github.com/prometheus/prometheus/releases/download/v2.53.3/prometheus-2.53.3.linux-arm64.tar.gz
+     ```
+
+   - 离线获取
+
+     下载地址：https://github.com/prometheus/prometheus/releases/download/v2.53.3/prometheus-2.53.3.linux-arm64.tar.gz
+
+2. 上传到服务器
+
+   ```shell
+   [root@test03 ~]# scp prometheus-2.53.3.linux-arm64.tar.gz root@192.168.0.3:/opt/
+   ```
+
+3. 解压安装包
+
+   ```shell
+   [root@test03 ~]# cd /opt 
+   [root@test03 ~]# tar -zxvf prometheus-2.53.3.linux-arm64.tar.gz
+   ```
+
+4. 创建符号连接
+
+   ```shell
+   [root@test03 ~]# ln -s /opt/prometheus-2.53.3.linux-arm64 /usr/local/prometheus
+   ```
+
+5. 给prometheus账号授权
+
+   ```shell
+   [root@test03 ~]# chown -R prometheus:prometheus /opt/prometheus-2.53.3.linux-arm64
+   [root@test03 ~]# chown -R prometheus:prometheus /usr/local/prometheus
+   ```
+
+6. 创建`prometheus.service`服务文件
+
+   - 编辑`prometheus.service`文件
+
+     ```
+     [root@test03 ~]# vi /usr/lib/systemd/system/prometheus.service
+     ```
+
+   - 添加以下内容
+
+     ```shell
+     [Unit]
+     Description=https://prometheus.io
+     After=network.target
+     
+     [Service]
+     LimitNOFILE=1000000
+     LimitNPROC=1000000
+     LimitCORE=infinity
+     User=prometheus
+     Group=prometheus
+     Restart=on-failure
+     RestartSec=120
+     ExecStart=/bin/bash -c \
+               "exec /usr/local/prometheus/prometheus \
+               --config.file=/usr/local/prometheus/prometheus.yml \
+               --web.enable-lifecycle \
+               --storage.tsdb.retention.time=12w \
+               --web.listen-address=:9090 \
+               --storage.tsdb.path=/data01/prometheus \
+               >> /var/log/prometheus/prometheus-server.log 2>&1"
+     
+     [Install]
+     WantedBy=multi-user.target
+     ```
+
+7. 设置Prometheus开机启动
+
+   ```shell
+   [root@test03 ~]# systemctl enable prometheus
+   ```
+
+8. 修改配置文件`prometheus.yml`
+
+   ```yaml
+   # my global config
+   global:
+     scrape_interval: 30s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+     scrape_timeout: 20s
+     evaluation_interval: 30s # Evaluate rules every 15 seconds. The default is every 1 minute.
+     # scrape_timeout is set to the global default (10s).
+   
+   # Alertmanager configuration
+   alerting:
+     alertmanagers:
+       - static_configs:
+           - targets:
+             # - alertmanager:9093
+   
+   # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+   rule_files:
+     # - "first_rules.yml"
+     # - "second_rules.yml"
+   
+   # A scrape configuration containing exactly one endpoint to scrape:
+   # Here it's Prometheus itself.
+   scrape_configs:
+     # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+     - job_name: "prometheus"
+       metrics_path: /metrics
+       scheme: http
+       # metrics_path defaults to '/metrics'
+       # scheme defaults to 'http'.
+       static_configs:
+         - targets: ["localhost:9090"]
+     - job_name: "node-exporter-static_configs"
+       metrics_path: /metrics
+       scheme: http
+       static_configs:
+         - targets: ["192.168.0.24:9100","192.168.0.26:9100","192.168.0.27:9100","192.168.0.28:9100"]
+     - job_name: "node-exporter-file_sd_config"
+       metrics_path: /metrics
+       scheme: http
+       file_sd_configs:
+         - files:
+           - /usr/local/prometheus/data/node-exporter.json
+           refresh_interval: 1m
+       relabel_configs:
+       - source_labels: [__address__]
+         separator: ':'
+         regex: (.*):.*
+         target_label: ip
+         replacement: ${1}
+         action: replace
+     - job_name: "Doris"
+       metrics_path: /metrics
+       scheme: http
+       static_configs:
+         - targets: ["192.168.0.2:8030","192.168.0.3:8040","192.168.0.4:8040","192.168.0.5:8040"]
+       relabel_configs:
+       - source_labels: [__address__]
+         separator: ':'
+         regex: (.*):.*
+         target_label: ip
+         replacement: ${1}
+         action: replace
+   ```
+
+9. 编辑`/usr/local/prometheus/data/node-exporter.json`文件
+
+   ```json
+   [
+   	{
+   		"labels":{
+   			"env":"test",
+   			"paas":"doris",
+   			"exporter":"node-exporter"
+   		},
+   		"targets":[
+   			"192.168.0.24:9100"
+   		]
+   	},
+   	{
+   		"labels":{
+   			"env":"test",
+   			"paas":"doris",
+   			"exporter":"node-exporter"
+   		},
+   		"targets":[
+   			"192.168.0.26:9100"
+   		]
+   	},
+   	{
+   		"labels":{
+   			"env":"test",
+   			"paas":"doris",
+   			"exporter":"node-exporter"
+   		},
+   		"targets":[
+   			"192.168.0.27:9100"
+   		]
+   	},
+   	{
+   		"labels":{
+   			"env":"test",
+   			"paas":"doris",
+   			"exporter":"node-exporter"
+   		},
+   		"targets":[
+   			"192.168.0.28:9100"
+   		]
+   	}
+   ]
+   ```
+
+10. 创建日志目录
+
+    ```shell
+    [root@test03 ~]# mkdir -p /var/log/prometheus
+    [root@test03 ~]# chown -R prometheus:prometheus /var/log/prometheus
+    ```
+
+11. 启动prometheus
+
+    ```shell
+    [root@test03 ~]# systemctl enable prometheus
+    ```
+
+12. 验证
+
+    ```shell
+    #通过curl访问prometheus
+    [root@test03 ~]# curl http://ip:9090/graph
+    #prometheus.yml配置文件修改后可以用以下命令刷新
+    [root@test03 ~]# curl -X POST http://127.0.0.1:9090/-/reload
+    ```
+
+13. Prometheus数据目录详解
+
+    > Prometheus按2小时一个block进行存储，每个block由一个目录组成，该目录里包含：一个或者多个chunk文件（保存时间序列数据），默认每个chunk大小为512M、一个metadata文件、一个index文件（通过metric name和labels查找时间序列数据在chunk 块文件的位置）
+    >
+    > 未落盘的内容在WAL里，这是因prometheus为了防止程序崩溃导致数据丢失，采用WAL（write-ahead-log）预写日志机制，启动时会以写入日志(WAL)的方式来实现重播，从而恢复数据；落盘后wal文件内对应的数据删除，生成index, tombstones(删除数据的记录)，chunks数据文件00001；
+    >
+    > 数据过期清理时间，默认保存15天，删除数据时，删除条目会记录在独立的tombstone删除记录文件中，而不是立即从chunk文件删除。
+
+    ```shell
+    [root@test03 prometheus]# ll /data02/prometheus
+    total 20K
+    drwxr-xr-x 3 prometheus prometheus  68 Mar  2 07:00 01JN9Z0EBCR3NVJ9C00T3CWDNG
+    drwxr-xr-x 3 prometheus prometheus  68 Mar  4 11:00 01JNFHH60HF5WZZXZCVZZ8YBA2
+    drwxr-xr-x 3 prometheus prometheus  68 Mar  4 13:00 01JNFRCX8J5ARRJRFFC04JCPAB
+    drwxr-xr-x 3 prometheus prometheus  68 Mar  4 13:00 01JNFRD0TYZCZF0EQ7RZYNKC3J
+    drwxr-xr-x 3 prometheus prometheus  68 Mar  4 15:00 01JNFZ8MGHR7JRHTG72NZEJX02
+    drwxr-xr-x 2 prometheus prometheus  34 Mar  4 15:01 chunks_head
+    -rw-r--r-- 1 prometheus prometheus   0 Feb 25 13:46 lock
+    -rw-r--r-- 1 prometheus prometheus 20K Mar  3 16:47 queries.active
+    drwxr-xr-x 3 prometheus prometheus  97 Mar  4 15:00 wal
+    #每2小时生成一个chunks文件
+    [root@test03 prometheus]# ll 01JN9Z0EBCR3NVJ9C00T3CWDNG
+    total 34M
+    drwxr-xr-x 2 prometheus prometheus   34 Mar  2 07:00 chunks
+    -rw-r--r-- 1 prometheus prometheus  34M Mar  2 07:00 index
+    -rw-r--r-- 1 prometheus prometheus 2.4K Mar  2 07:00 meta.json
+    -rw-r--r-- 1 prometheus prometheus    9 Mar  2 07:00 tombstones
+    #wal落盘前
+    [root@test03 prometheus]# ll wal/
+    total 163M
+    -rw-r--r-- 1 prometheus prometheus 48M Mar  4 11:00 00000082
+    -rw-r--r-- 1 prometheus prometheus 50M Mar  4 13:00 00000083
+    -rw-r--r-- 1 prometheus prometheus 50M Mar  4 15:00 00000084
+    -rw-r--r-- 1 prometheus prometheus 16M Mar  4 15:37 00000085
+    drwxr-xr-x 2 prometheus prometheus  22 Mar  4 13:00 checkpoint.00000081
+    #wal落盘后
+    [root@test03 prometheus]# ll 01JNFHH60HF5WZZXZCVZZ8YBA2/chunks/
+    total 11M
+    -rw-r--r-- 1 prometheus prometheus 11M Mar  4 11:00 000001
+    ```
+
+### 在线安装
+
 
 
 ## 集群与高可用部署
