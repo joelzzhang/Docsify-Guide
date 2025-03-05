@@ -97,7 +97,7 @@
                 }
             },
             timeUpdater: {
-                text: "<div class='docsify-updated' align='center' width='200px' style='color:gray;font-size:10px'>-------------- 最后更新时间:&emsp;{docsify-updated} --------------</div>",
+                text: "<div class='docsify-updated'>最后更新时间:&emsp;{docsify-updated}</div>",
                 formatUpdated: "{YYYY}/{MM}/{DD}",
                 whereToPlace: "top"  // "top" or "bottom", default to "bottom"
             },
@@ -122,6 +122,10 @@
                         // beforeEach 和 afterEach 支持处理异步逻辑
                         // ...
                         // 异步处理完成后调用 next(html) 返回结果
+                        // 使用正则表达式匹配目标 div（支持嵌套结构）
+                        const regex = new RegExp(`<div class="docsify-updated">.*</div>`);
+                        // 第一次匹配：提取原始内容
+                        const match = html.match(regex);
                         // 1. 精准定位第二个 div（必须确保 class 名称完全正确）
                         const secondDiv = document.querySelector('.docsify-updated');
                         console.log(secondDiv);
