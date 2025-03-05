@@ -116,6 +116,23 @@
                 isExpected: true
             }
         }
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 直接定位到第二个 div（class="docsify-updated"）
+            const secondDiv = document.querySelector('.docsify-updated');
+
+            // 2. 找到它紧邻的前一个 div（第一个目标容器）
+            const firstDiv = secondDiv.previousElementSibling;
+
+            // 3. 提取第二个 div 的核心内容（去除空白符）
+            const secondContent = secondDiv.textContent.trim();
+
+            // 4. 定位到第一个 div 内的 span 元素并插入内容
+            const firstSpan = firstDiv.querySelector('span');
+            firstSpan.innerHTML += ` | ${secondContent}`;
+
+            // 5. 删除第二个 div
+            secondDiv.remove();
+        });
     </script>
     <!-- docsify的js依赖 -->
     <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
