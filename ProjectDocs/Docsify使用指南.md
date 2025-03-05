@@ -317,6 +317,39 @@ https://docsify.js.org/#/zh-cn/themes
 - [官方docsify部署教程](https://docsify.js.org/#/zh-cn/deploy)
 - [30分钟使用Docsify+Github Pages搭建个人博客 ](https://www.cnblogs.com/Can-daydayup/p/15779888.html)
 
+## alert插件
+Sample alert using type NOTE
+
+> [!NOTE]
+> An alert of type 'note' using global style 'callout'.
+
+Sample alert using type TIP
+
+> [!TIP]
+> An alert of type 'tip' using global style 'callout'.
+Sample alert using type WARNING
+
+> [!WARNING]
+> An alert of type 'warning' using global style 'callout'.
+
+Sample alert using type ATTENTION
+
+> [!ATTENTION]
+> An alert of type 'attention' using global style 'callout'.
+
+自定义
+
+> [!NOTE]
+> An alert of type 'note' using global style 'callout'.
+
+> [!NOTE|style:flat]
+> An alert of type 'note' using alert specific style 'flat' which overrides global style 'callout'.
+
+Multiple options can be used for single alerts as shown below:
+
+> [!TIP|style:flat|label:My own heading|iconVisibility:hidden]
+> An alert of type 'tip' using alert specific style 'flat' which overrides global style 'callout'.
+> In addition, this alert uses an own heading and hides specific icon.
 
 ## 相关教程
 
