@@ -118,18 +118,32 @@
             plugins: [
                 function(hook, vm) {
                     hook.afterEach(function(html, next) {
-                        // 解析成 html 后调用。
-                        // beforeEach 和 afterEach 支持处理异步逻辑
-                        // ...
-                        // 异步处理完成后调用 next(html) 返回结果
-                        // 使用正则表达式匹配目标 div（支持嵌套结构）
-                        // 创建临时容器解析 HTML
                         const tempContainer = document.createElement('div');
                         tempContainer.innerHTML = html;
-
-                        // 查找目标元素（支持类名、ID、属性等选择器）
                         // 1. 精准定位第二个 div（必须确保 class 名称完全正确）
                         const secondDiv = tempContainer.querySelector('.docsify-updated');
+
+                        //2. 检查是否成功选中第二个 div
+                        if (!secondDiv) {
+                            console.error('未找到 class="docsify-updated" 的 div');
+                            return;
+                        }
+
+                        // 3. 获取紧邻的前一个 div（必须是直接相邻的兄弟节点）
+                        const firstDiv = secondDiv.previousElementSibling;
+
+                        // 4. 检查前一个 div 是否存在且包含 span 元素
+                        if (!firstDiv || !firstDiv.querySelector('span')) {
+                            console.error('第一个 div 或其内部的 span 未找到');
+                            return;
+                        }
+
+                        // 5. 提取内容和插入
+                        const secondContent = secondDiv.textContent.trim();
+                        firstDiv.querySelector('span').innerHTML += ` | ${secondContent}`;
+
+                        // 6. 删除第二个 div
+                        secondDiv.remove();
                         console.log(secondDiv);
                         next(html);
                     });
