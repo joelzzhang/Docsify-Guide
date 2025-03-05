@@ -109,6 +109,11 @@
                 attention: {
                     label: "Achtung"
                 }
+            },
+            timeUpdater: {
+                text: "<div align='center' width='200px' style='color:gray;font-size:10px'>-------------- 最后更新时间:&emsp;{docsify-updated} --------------</div>",
+                formatUpdated: "{YYYY}/{MM}/{DD}",
+                whereToPlace: "top"  // "top" or "bottom", default to "bottom"
             }
         }
     </script>
@@ -151,6 +156,7 @@
     <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-css.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-core.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/docsify-count@latest/dist/countable.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify-updated/src/time-updater.min.js"></script>
     <script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
 </body>
 
