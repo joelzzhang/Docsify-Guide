@@ -123,11 +123,13 @@
                         // ...
                         // 异步处理完成后调用 next(html) 返回结果
                         // 使用正则表达式匹配目标 div（支持嵌套结构）
-                        const regex = new RegExp(`<div class="docsify-updated">.*</div>`);
-                        // 第一次匹配：提取原始内容
-                        const match = html.match(regex);
+                        // 创建临时容器解析 HTML
+                        const tempContainer = document.createElement('div');
+                        tempContainer.innerHTML = html;
+
+                        // 查找目标元素（支持类名、ID、属性等选择器）
                         // 1. 精准定位第二个 div（必须确保 class 名称完全正确）
-                        const secondDiv = document.querySelector('.docsify-updated');
+                        const secondDiv = tempContainer.querySelector('.docsify-updated');
                         console.log(secondDiv);
                         next(html);
                     });
