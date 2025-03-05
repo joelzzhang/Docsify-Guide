@@ -1,315 +1,375 @@
-## Docsify使用指南
+## 磁盘管理
 
-![image-20211016010648260](images/image-20211016010648260.png)
+### lsblk命令
 
-## Node.js 安装配置
+通过lsblk命令查看当前挂载的磁盘情况
 
-* [nodejs下载地址](http://nodejs.cn/download/)
-
-* [Node.js最新最详细安装教程](https://blog.csdn.net/Small_Yogurt/article/details/104968169)
-
-![image-20211001044346349](images/image-20211001044346349.png)
-
-win+r：cmd进入命令提示符窗口，分别输入以下命令查看node和npm的版本能够正常显示版本号，则安装成功：
-
-- node -v：显示安装的nodejs版本
-- npm -v：显示安装的npm版本
-
-![image-20211001044742251](images/image-20211001044742251.png)
-
-
-
-## docsify-cli工具安装
-
-> 推荐全局安装 `docsify-cli` 工具，可以方便地创建及在本地预览生成的文档。
-
-``` javascript
-npm i docsify-cli -g
-```
-
-![image-20211001045416111](images/image-20211001045416111.png)
-
-
-
-## 项目初始化
-
-> 如果想在项目的 `./docs(文件名可以按自己的想法来)` 目录里写文档，直接通过 `init` 初始化项目。
-
-``` javascript
-docsify init ./Docsify-Guide
-```
-
-
-
-初始化成功后，可以看到 `./docs` 目录下创建的几个文件
-
-- `index.html` 入口文件
-- `README.md` 会做为主页内容渲染
-- `.nojekyll` 用于阻止 GitHub Pages 忽略掉下划线开头的文件
-
-直接编辑 `docs/README.md` 就能更新文档内容，当然也可以[添加更多页面](https://docsify.js.org/#/zh-cn/more-pages)。
-
-
-
-## 本地运行docsify创建的项目
-
-> 通过运行 `docsify serve 项目名称 ` 启动一个本地服务器，可以方便地实时预览效果。默认访问地址 [http://localhost:3000](http://localhost:3000/) 。
-
-``` javascript
-docsify serve Docsify-Guide
-```
-
-![image-20211010124211458](images/image-20211010124211458.png)
-
-## Linux下后台部署项目
-在Linux下如果使用下面的命令启动docsify，会发现一旦关闭了xShell，那么就访问不了了，具体问题还不清楚，下面说种可以在后台运行的方法；
 ```shell
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
+[root@localhost /]# lsblk 
+NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda               8:0    0   30G  0 disk 
+├─sda1            8:1    0  300M  0 part /boot
+├─sda2            8:2    0   17G  0 part 
+│ ├─centos-root 253:0    0   15G  0 lvm  /
+│ └─centos-swap 253:1    0    2G  0 lvm  [SWAP]
+└─sda3            8:3    0 12.7G  0 part /data
+sr0              11:0    1 1024M  0 rom  
 ```
-通过编写shell脚本，将上面代码放到脚本里面，再启动就可以了；    
-1、创建脚本：vim start_docsify.sh
+
+### findmnt命令
+
+通过findmnt查看文件系统详细信息
+
 ```shell
-#! bin/bash
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
+[root@localhost data]# findmnt
+TARGET                                SOURCE                  FSTYPE      OPTIONS
+/                                     /dev/mapper/centos-root xfs         rw,relatime,seclabel,attr2,inode64,noquota
+├─/sys                                sysfs                   sysfs       rw,nosuid,nodev,noexec,relatime,seclabel
+│ ├─/sys/kernel/security              securityfs              securityfs  rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/fs/cgroup                    tmpfs                   tmpfs       ro,nosuid,nodev,noexec,seclabel,mode=755
+│ │ ├─/sys/fs/cgroup/systemd          cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd
+│ │ ├─/sys/fs/cgroup/cpu,cpuacct      cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,cpuacct,cpu
+│ │ ├─/sys/fs/cgroup/net_cls,net_prio cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,net_prio,net_cls
+│ │ ├─/sys/fs/cgroup/devices          cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,devices
+│ │ ├─/sys/fs/cgroup/cpuset           cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,cpuset
+│ │ ├─/sys/fs/cgroup/memory           cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,memory
+│ │ ├─/sys/fs/cgroup/freezer          cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,freezer
+│ │ ├─/sys/fs/cgroup/hugetlb          cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,hugetlb
+│ │ ├─/sys/fs/cgroup/blkio            cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,blkio
+│ │ ├─/sys/fs/cgroup/pids             cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,pids
+│ │ └─/sys/fs/cgroup/perf_event       cgroup                  cgroup      rw,nosuid,nodev,noexec,relatime,seclabel,perf_event
+│ ├─/sys/fs/pstore                    pstore                  pstore      rw,nosuid,nodev,noexec,relatime
+│ ├─/sys/kernel/config                configfs                configfs    rw,relatime
+│ ├─/sys/fs/selinux                   selinuxfs               selinuxfs   rw,relatime
+│ └─/sys/kernel/debug                 debugfs                 debugfs     rw,relatime
+├─/proc                               proc                    proc        rw,nosuid,nodev,noexec,relatime
+│ └─/proc/sys/fs/binfmt_misc          systemd-1               autofs      rw,relatime,fd=32,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=25195
+│   └─/proc/sys/fs/binfmt_misc        binfmt_misc             binfmt_misc rw,relatime
+├─/dev                                devtmpfs                devtmpfs    rw,nosuid,seclabel,size=2001072k,nr_inodes=500268,mode=755
+│ ├─/dev/shm                          tmpfs                   tmpfs       rw,nosuid,nodev,seclabel
+│ ├─/dev/pts                          devpts                  devpts      rw,nosuid,noexec,relatime,seclabel,gid=5,mode=620,ptmxmode=000
+│ ├─/dev/hugepages                    hugetlbfs               hugetlbfs   rw,relatime,seclabel
+│ └─/dev/mqueue                       mqueue                  mqueue      rw,relatime,seclabel
+├─/run                                tmpfs                   tmpfs       rw,nosuid,nodev,seclabel,mode=755
+│ └─/run/user/0                       tmpfs                   tmpfs       rw,nosuid,nodev,relatime,seclabel,size=402640k,mode=700
+├─/boot                               /dev/sda1               xfs         rw,relatime,seclabel,attr2,inode64,noquota
+└─/data                               /dev/sda3               xfs         rw,relatime,seclabel,attr2,inode64,noquota
 ```
-2、启动脚本
+
+### fdisk命令
+
+通过fdisk命令来管理分区
+
+fdisk 磁盘名称，如：fdisk /dev/sda
+
 ```shell
-bash start_docsify.sh
+[root@localhost /]# fdisk /dev/sda
+欢迎使用 fdisk (util-linux 2.23.2)。
+
+更改将停留在内存中，直到您决定将更改写入磁盘。
+使用写入命令前请三思。
+
+命令(输入 m 获取帮助)：m
+命令操作
+   a   toggle a bootable flag
+   b   edit bsd disklabel
+   c   toggle the dos compatibility flag
+   d   delete a partition 删除分区
+   g   create a new empty GPT partition table
+   G   create an IRIX (SGI) partition table
+   l   list known partition types 列出已知分区
+   m   print this menu
+   n   add a new partition 新建分区
+   o   create a new empty DOS partition table
+   p   print the partition table
+   q   quit without saving changes
+   s   create a new empty Sun disklabel
+   t   change a partition's system id
+   u   change display/entry units
+   v   verify the partition table
+   w   write table to disk and exit 保存并推出
+   x   extra functionality (experts only)
+
+命令(输入 m 获取帮助)：n
+Partition type:
+   p   primary (2 primary, 0 extended, 2 free) 主分区
+   e   extended 扩展分区
+Select (default p): p
+分区号 (3,4，默认 3)：3
+起始 扇区 (36284416-62914559，默认为 36284416)：
+将使用默认值 36284416
+Last 扇区, +扇区 or +size{K,M,G} (36284416-62914559，默认为 62914559)：
+将使用默认值 62914559
+分区 3 已设置为 Linux 类型，大小设为 12.7 GiB
+
+命令(输入 m 获取帮助)：w
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+
+WARNING: Re-reading the partition table failed with error 16: 设备或资源忙.
+The kernel still uses the old table. The new table will be used at
+the next reboot or after you run partprobe(8) or kpartx(8)
+正在同步磁盘。
 ```
 
-## 基础配置文件介绍
+### parted命令
 
-> 其实我们维护一份轻量级的个人&团队文档我们只需要配置以下这几个基本文件就可以了。
+```shell
+[root@emrmaster01 ~]# parted /dev/vdd
+GNU Parted 3.3
+Using /dev/vdd
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) help                                                             
+  align-check TYPE N                       check partition N for TYPE(min|opt) alignment
+  help [COMMAND]                           print general help, or help on COMMAND
+  mklabel,mktable LABEL-TYPE               create a new disklabel (partition table)
+  mkpart PART-TYPE [FS-TYPE] START END     make a partition
+  name NUMBER NAME                         name partition NUMBER as NAME
+  print [devices|free|list,all|NUMBER]     display the partition table, available devices, free space, all found partitions, or a particular partition
+  quit                                     exit program
+  rescue START END                         rescue a lost partition near START and END
+  resizepart NUMBER END                    resize partition NUMBER
+  rm NUMBER                                delete partition NUMBER
+  select DEVICE                            choose the device to edit
+  disk_set FLAG STATE                      change the FLAG on selected device
+  disk_toggle [FLAG]                       toggle the state of FLAG on selected device
+  set NUMBER FLAG STATE                    change the FLAG on partition NUMBER
+  toggle [NUMBER [FLAG]]                   toggle the state of FLAG on partition NUMBER
+  unit UNIT                                set the default unit to UNIT
+  version                                  display the version number and copyright information of GNU Parted
+(parted) mklabel                                                      
+New disk label type? msdos/gpt                        
+(parted) mkpart                                                           
+Partition type?  primary/extended? primary                                
+File system type?  [ext2]? xfs                                            
+Start? 0%
+End? 100%                                                                 
+(parted) print                                                            
+Model: Virtio Block Device (virtblk)
+Disk /dev/vdd: 537GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
 
-|        文件作用        |     文件      |
-| :--------------------: | :-----------: |
-| 基础配置项（入口文件） |  index.html   |
-|      封面配置文件      | _coverpage.md |
-|     侧边栏配置文件     |  _sidebar.md  |
-|     导航栏配置文件     |  _navbar.md   |
-|    主页内容渲染文件    |   README.md   |
-|       浏览器图标       |  favicon.ico  |
+Number  Start   End    Size   Type     File system  Flags
+ 1      1049kB  537GB  537GB  primary  xfs          lba
 
-
-
-## 基础配置项（index.html）
-
-> 下面是一份基础的配置项模板如下(可直接Copy使用)。
-
-``` html
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Docsify-Guide</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="description" content="Description">
-    <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <!-- 设置浏览器图标 -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-    <!-- 默认主题 -->
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
-</head>
-
-<body>
-    <!-- 定义加载时候的动作 -->
-    <div id="app">加载中...</div>
-    <script>
-        window.$docsify = {
-            // 项目名称
-            name: 'Docsify-Guide',
-            // 仓库地址，点击右上角的Github章鱼猫头像会跳转到此地址
-            repo: 'https://github.com/YSGStudyHards',
-            // 侧边栏支持，默认加载的是项目根目录下的_sidebar.md文件
-            loadSidebar: true,
-            // 导航栏支持，默认加载的是项目根目录下的_navbar.md文件
-            loadNavbar: true,
-            // 封面支持，默认加载的是项目根目录下的_coverpage.md文件
-            coverpage: true,
-            // 最大支持渲染的标题层级
-            maxLevel: 5,
-            // 自定义侧边栏后默认不会再生成目录，设置生成目录的最大层级（建议配置为2-4）
-            subMaxLevel: 4,
-            // 小屏设备下合并导航栏到侧边栏
-            mergeNavbar: true,
-        }
-    </script>
-    <script>
-        // 搜索配置(url：https://docsify.js.org/#/zh-cn/plugins?id=%e5%85%a8%e6%96%87%e6%90%9c%e7%b4%a2-search)
-        window.$docsify = {
-            search: {
-                maxAge: 86400000,// 过期时间，单位毫秒，默认一天
-                paths: auto,// 注意：仅适用于 paths: 'auto' 模式
-                placeholder: '搜索',
-                // 支持本地化
-                placeholder: {
-                    '/zh-cn/': '搜索',
-                    '/': 'Type to search'
-                },
-                noData: '找不到结果',
-                depth: 4,
-                hideOtherSidebarContent: false,
-                namespace: 'Docsify-Guide',
-            }
-        }
-    </script>
-    <!-- docsify的js依赖 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-    <!-- emoji表情支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
-    <!-- 图片放大缩小支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
-    <!-- 搜索功能支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
-    <!--在所有的代码块上添加一个简单的Click to copy按钮来允许用户从你的文档中轻易地复制代码-->
-    <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-</body>
-
-</html>
-```
-
-
-
-## 封面配置文件（_coverpage.md）
-
-> [Docsify官网封面配置教程](https://docsify.js.org/#/zh-cn/cover)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    coverpage: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-
-
-**_coverpage.md**
-
-``` markdown
-<!-- _coverpage.md -->
-
-# Docsify使用指南 
-
-> 💪Docsify使用指南，使用Typora+Docsify打造最强、最轻量级的个人&团队文档。
-
- 简单、轻便 (压缩后 ~21kB)
-- 无需生成 html 文件
-- 众多主题
-
-
-[开始使用 Let Go](/README.md)
-```
-
-![image-20211016010808681](images/image-20211016010808681.png)
-
-## 侧边栏配置文件（_sidebar.md）
-
-> [Docsify官网配置侧边栏教程](https://docsify.js.org/#/zh-cn/more-pages?id=%e5%ae%9a%e5%88%b6%e4%be%a7%e8%be%b9%e6%a0%8f)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    loadSidebar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-> 在index.html基础配置文件中设置了二级目录
-
-![image-20211010133908643](images/image-20211010133908643.png)
-
-**_sidebar.md**
-
-``` markdown
-<!-- _sidebar.md -->
-
-* Typora+Docsify使用指南
-  * [Docsify使用指南](/ProjectDocs/Docsify使用指南.md) <!--注意这里是相对路径-->
-  * [Typora+Docsify快速入门](/ProjectDocs/Typora+Docsify快速入门.md)
-* Docsify部署
-  * [Docsify部署教程](/ProjectDocs/Docsify部署教程.md)
+(parted) quit 
 
 ```
 
-![image-20211010140836290](images/image-20211010140836290.png)
+### partprobe命令
 
-## 导航栏配置文件（_navbar.md）
+新增分区后如果看不到最新的分区则使用partprobe命令来刷新
 
-> [Docsify官网配置导航栏教程](https://docsify.js.org/#/zh-cn/custom-navbar?id=%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
+```shell
+partprobe [OPTION] [DEVICE]
+  -d, --dry-run    do not actually inform the operating system
+  -s, --summary    print a summary of contents
+  -h, --help       display this help and exit
+  -v, --version    output version information and exit
+```
 
-**index.html**
+### mount命令
 
-``` html
-<!-- index.html -->
+通过mount来挂载分区，需要先新建待挂载的目录，如：/data
 
-<script>
-  window.$docsify = {
-    loadNavbar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
+```shell
+mount /dev/sda3 /data
+```
+
+如果出现如下提示
+
+```shell
+[root@localhost /]# mount /dev/sda3 /data
+mount: /dev/sda3 写保护，将以只读方式挂载
+mount: 未知的文件系统类型“(null)”
+```
+
+### mkfs命令
+
+新增分区后需要先格式化分区后才能正常挂载，在linux中默认使用xfs类型的文件，mkfs.xfs就是初始化文件系统得命令，该命令会格式化分区
+
+```shell
+[root@localhost /]# mkfs.xfs /dev/sda3
+meta-data=/dev/sda3              isize=512    agcount=4, agsize=832192 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=3328768, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+[root@localhost /]# mkfs -t ext4 /dev/sdb1
+```
+
+格式化后再通过mount命令重新挂载就可以了。
+
+### 开机挂载
+
+通过blkid计算出待挂载分区的UUID
+
+```shell
+[root@localhost ~]# blkid /dev/sda3
+/dev/sda3: UUID="23943d2f-d3a4-4bf6-ad41-e9bef0cb15a3" TYPE="xfs"
+```
+
+然后编辑/etc/fstab文件，将以下内容添加到末尾
+
+```tex
+UUID=23943d2f-d3a4-4bf6-ad41-e9bef0cb15a3 /data                   xfs     defaults        0 0
+```
+
+然后在编辑完文件之后，我们可以使用mount -a来挂载分区，没有任务输出则表示挂载成功。
+
+### umount命令
+
+通过umount来卸载分区
+
+```shell
+[root@localhost ~]# umount /mnt/ 
+```
+
+但是有些时候会发生下面的情况
+
+```shell
+ [root@localhost mnt]# umount /mnt/ 
+ umount: /mnt: device is busy. 
+ 	(In some cases useful info about processes that use 
+ 		the device is found by lsof(8) or fuser(1)) 
+```
+
+解决方法： 
+
+1.fuser 
+
+	-v 那些进程在占用挂载点
+
+```shell
+[root@localhost ~]# fuser -v /data
+                     用户     进程号 权限   命令
+/data:               root     kernel mount /data
+[root@localhost opt]# fuser -v /opt
+                     用户     进程号 权限   命令
+/opt:                root       9570 ..c.. bash
+```
+
+	-km 结束占用挂载点的进程 
+
+```shell
+[root@localhost ～]# fuser -km /data
+```
+
+2.umount -l 
+
+	-l Lazy unmount.(Requires kernel 2.4.11 or later.) 
+
+```shell
+[root@localhost ～]# umount -l /data
+```
+
+### 查询指定目录的磁盘占用情况:
+
+```shell
+du /目录
+  -h  带计量单位
+  -s  指令目录占用磁盘大小
+  -a  含文件
+  -c  列出明细,并显示汇总值
+  --max-depth=1 子目录深度
+```
+
+### 调整分区大小
+
+```shell
+[root@VM-0-10-centos ~]# parted /dev/vda
+GNU Parted 3.2
+Using /dev/vda
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) resizepart                                                     
+Partition number? 1                                                       
+Warning: Partition /dev/vda1 is being used. Are you sure you want to continue?
+Yes/No? yes                                                               
+End?  [32.2GB]? 30.2G                                                     
+Warning: Shrinking a partition can cause data loss, are you sure you want to continue?
+Yes/No? yes                                                               
+(parted) q                                                                
+Information: You may need to update /etc/fstab.
 ```
 
 
 
-**_navbar.md**
+## swap交换分区管理:
 
-``` markdown
-<!-- _navbar.md -->
+### 创建swap分区
 
-* 链接到我
-  * [博客园地址](https://www.cnblogs.com/Can-daydayup/)
-  * [Github地址](https://github.com/YSGStudyHards)
-  * [知乎地址](https://www.zhihu.com/people/ysgdaydayup)
-  * [掘金地址](https://juejin.cn/user/2770425031690333/posts)
-  * [Gitee地址](https://gitee.com/ysgdaydayup)
+> swap分区创建参考普通分区创建即可
 
-
-* 友情链接
-  * [Docsify](https://docsify.js.org/#/)
-  * [博客园](https://www.cnblogs.com/)
-
-
+```shell
+fdisk /dev/vdb
+  n
+  p
+  2048
+  +32G
+  w
 ```
 
-![image-20211016010857082](images/image-20211016010857082.png)
+> 默认Linux分区的ID是83,我们要更改为82,专门用于swap:
 
+```shell
+fdisk /dev/vdb
+  t
+  1
+  l
+  82
+```
 
+### 使用mkswap写入特殊签名，卷标设置为swap:
 
-## 全文搜索 - Search
+```shell
+mkswap /dev/vdb1 -L swap
+```
 
-[全文搜索 - Search](https://docsify.js.org/#/zh-cn/plugins?id=全文搜索-search)
+### 查看是否创建成功:
 
+```shell
+blkid
+/dev/sr0: UUID="2023-04-19-10-25-35-00" LABEL="config-2" TYPE="iso9660"
+/dev/vda1: UUID="0fb6f32a-9a3c-4a88-b00e-d6a0cd7611c4" TYPE="ext4"
+/dev/vdb1: LABEL="swap" UUID="e8914216-592d-4805-8458-8924042f544a" TYPE="swap"
+/dev/vdb2: UUID="9a9fd10c-8372-43b4-94a0-b146d07ad655" TYPE="ext4"
+```
 
+### 永久挂载:
 
-## Docsify主题切换
+```shell
+vim /etc/fatab
+或者
+echo "UUID=e8914216-592d-4805-8458-8924042f544a swap swap defaults 0 0" >>/etc/fstab
+```
 
-> 注意：切换主题只需要在根目录的index.html切换对应的主题css文件即可
+### 挂载swap:
 
-https://docsify.js.org/#/zh-cn/themes
+```shell
+mount -a
+```
 
+### 查看swap的分区挂载:
 
+```shell
+swapon -s
+```
 
-## 相关教程
+### 激活交换空间:
 
-* [docsify-github地址](https://github.com/docsifyjs/docsify/#showcase)
-* [docsify快速开始-官方教程](https://docsify.js.org/#/zh-cn/quickstart)
-* [使用开源文档工具docsify，用写博客的姿势写文档](https://www.cnblogs.com/throwable/p/13605289.html)
-* [Docsify使用指南（打造最强、最轻量级的个人&团队文档）](https://www.cnblogs.com/Can-daydayup/p/15413267.html)
+```shell
+swapon -a
+```
 
+### 关闭交换空间:
 
-
+```shell
+swapoff /dev/vdb1
+```
