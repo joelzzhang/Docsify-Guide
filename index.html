@@ -140,11 +140,10 @@
 
                         // 5. 提取内容和插入
                         const secondContent = secondDiv.textContent.trim();
-                        firstDiv.querySelector('span').innerHTML += ` | ${secondContent}`;
+                        firstDiv.querySelector('span').innerHTML += `&nbsp | &nbsp${secondContent}`;
 
                         // 6. 删除第二个 div
                         secondDiv.remove();
-                        console.log(firstDiv);
                         next(tempContainer.innerHTML);
                     });
 
