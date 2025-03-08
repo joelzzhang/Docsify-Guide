@@ -1,315 +1,248 @@
-## Docsify使用指南
+# Hadoop HA 高可用搭建
 
-![image-20211016010648260](images/image-20211016010648260.png)
-
-## Node.js 安装配置
-
-* [nodejs下载地址](http://nodejs.cn/download/)
-
-* [Node.js最新最详细安装教程](https://blog.csdn.net/Small_Yogurt/article/details/104968169)
-
-![image-20211001044346349](images/image-20211001044346349.png)
-
-win+r：cmd进入命令提示符窗口，分别输入以下命令查看node和npm的版本能够正常显示版本号，则安装成功：
-
-- node -v：显示安装的nodejs版本
-- npm -v：显示安装的npm版本
-
-![image-20211001044742251](images/image-20211001044742251.png)
+## 1 环境准备
 
 
 
-## docsify-cli工具安装
+## 2 环境规划
 
-> 推荐全局安装 `docsify-cli` 工具，可以方便地创建及在本地预览生成的文档。
+| IP         | hostname | 角色                                                         | 组件                  |
+| ---------- | -------- | ------------------------------------------------------------ | --------------------- |
+| 10.10.10.3 | hadoop1  | NameNode、JournalNode、DataNode 、Zookeeper、ResourceManager、NodeManager、ZKFC | HDFS、YARN、Zookeeper |
+| 10.10.10.4 | hadoop2  | JournalNode、DataNode  、Zookeeper、ResourceManager、NodeManager、HistoryServer、ZKFC | HDFS、YARN、Zookeeper |
+| 10.10.10.5 | hadoop3  | NameNode、JournalNode、DataNode  、Zookeeper、NodeManager、ZKFC | HDFS、YARN、Zookeeper |
 
-``` javascript
-npm i docsify-cli -g
-```
+## 3 HDFS配置高可用集群
 
-![image-20211001045416111](images/image-20211001045416111.png)
+### 3.1 配置hadoop-env.sh
 
-
-
-## 项目初始化
-
-> 如果想在项目的 `./docs(文件名可以按自己的想法来)` 目录里写文档，直接通过 `init` 初始化项目。
-
-``` javascript
-docsify init ./Docsify-Guide
-```
-
-
-
-初始化成功后，可以看到 `./docs` 目录下创建的几个文件
-
-- `index.html` 入口文件
-- `README.md` 会做为主页内容渲染
-- `.nojekyll` 用于阻止 GitHub Pages 忽略掉下划线开头的文件
-
-直接编辑 `docs/README.md` 就能更新文档内容，当然也可以[添加更多页面](https://docsify.js.org/#/zh-cn/more-pages)。
-
-
-
-## 本地运行docsify创建的项目
-
-> 通过运行 `docsify serve 项目名称 ` 启动一个本地服务器，可以方便地实时预览效果。默认访问地址 [http://localhost:3000](http://localhost:3000/) 。
-
-``` javascript
-docsify serve Docsify-Guide
-```
-
-![image-20211010124211458](images/image-20211010124211458.png)
-
-## Linux下后台部署项目
-在Linux下如果使用下面的命令启动docsify，会发现一旦关闭了xShell，那么就访问不了了，具体问题还不清楚，下面说种可以在后台运行的方法；
 ```shell
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
+export JAVA_HOME=/opt/jdk1.8.0_381
 ```
-通过编写shell脚本，将上面代码放到脚本里面，再启动就可以了；    
-1、创建脚本：vim start_docsify.sh
+
+### 3.2 配置core-site.xml
+
+```xml
+<configuration>
+    <!-- 把多个 NameNode 的地址组装成一个集群 mycluster -->
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://mycluster</value>
+    </property>
+    <!-- 指定 hadoop 运行时产生文件的存储目录 -->
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/data/hadoop</value>
+    </property>
+    <!-- 指定 zkfc 要连接的 zkServer 地址 -->
+    <property>
+        <name>ha.zookeeper.quorum</name>
+        <value>hadoop1:2181,hadoop2:2181,hadoop3:2181</value>
+    </property>
+    <!-- NN 连接 JN 重试次数，默认是 10 次 -->
+    <property>
+        <name>ipc.client.connect.max.retries</name>
+        <value>20</value>
+    </property>
+    <!-- 重试时间间隔，默认 1s -->
+    <property>
+        <name>ipc.client.connect.retry.interval</name>
+        <value>5000</value>
+    </property>
+</configuration>
+```
+
+### 3.3 配置hdfs-site.xml
+
+```xml
+<configuration>
+    <!-- NameNode 数据存储目录 -->
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>file://${hadoop.tmp.dir}/name</value>
+    </property>
+    <!-- DataNode 数据存储目录 -->
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>file://${hadoop.tmp.dir}/data</value>
+    </property>
+    <!-- JournalNode 数据存储目录 -->
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>${hadoop.tmp.dir}/jn</value>
+    </property>
+    <property>
+    <name>dfs.blocksize</name>
+        <value>134217728</value>
+    </property>
+    <property>
+        <name>dfs.datanode.max.transfer.threads</name>
+        <value>40960</value>
+    </property>
+    <property>
+        <name>dfs.replication</name>
+        <value>3</value>
+    </property>
+    <property>
+        <name>dfs.internal.nameservices</name>
+        <value>mycluster</value>
+    </property>
+    <!-- 完全分布式集群名称 -->
+    <property>
+        <name>dfs.nameservices</name>
+        <value>mycluster</value>
+    </property>
+    <!-- 集群中 NameNode 节点都有哪些 -->
+    <property>
+        <name>dfs.ha.namenodes.mycluster</name>
+        <value>nn1,nn2</value>
+    </property>
+    <!-- NameNode 的 RPC 通信地址 -->
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn1</name>
+        <value>hadoop1:8020</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn2</name>
+        <value>hadoop3:8020</value>
+    </property>
+    <!-- NameNode 的 http 通信地址 -->
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn1</name>
+        <value>hadoop1:9870</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn2</name>
+        <value>hadoop3:9870</value>
+    </property>
+    <!-- 指定 NameNode 元数据在 JournalNode 上的存放位置 -->
+    <property>
+        <name>dfs.namenode.shared.edits.dir</name>
+        <value>qjournal://hadoop1:8485;hadoop2:8485;hadoop3:8485/mycluster</value>
+    </property>
+    <!-- 访问代理类：client 用于确定哪个 NameNode 为 Active -->
+    <property>
+        <name>dfs.client.failover.proxy.provider.mycluster</name>
+        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+    </property>
+    <!-- 配置隔离机制，即同一时刻只能有一台服务器对外响应 -->
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>sshfence</value>
+    </property>
+    <!-- 使用隔离机制时需要 ssh 秘钥登录-->
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/root/.ssh/id_rsa</value>
+    </property>
+    <!-- 启用 nn 故障自动转移 -->
+    <property>
+        <name>dfs.ha.automatic-failover.enabled</name>
+        <value>true</value>
+    </property>
+</configuration>
+```
+
+## 4 YARN配置高可用集群
+
+### 4.1 配置yarn-site.xml
+
+```xml
+<configuration>
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <!-- 启用 resourcemanager ha -->
+    <property>
+        <name>yarn.resourcemanager.ha.enabled</name>
+        <value>true</value>
+    </property>
+    <!-- 声明两台 resourcemanager 的地址 -->
+    <property>
+        <name>yarn.resourcemanager.cluster-id</name>
+        <value>cluster-yarn1</value>
+    </property>
+    <!--指定 resourcemanager 的逻辑列表-->
+    <property>
+        <name>yarn.resourcemanager.ha.rm-ids</name>
+        <value>rm1,rm2</value>
+    </property>
+    <!-- ========== rm1 的配置 ========== -->
+    <!-- 指定 rm1 的主机名 -->
+    <property>
+        <name>yarn.resourcemanager.hostname.rm1</name>
+        <value>hadoop1</value>
+    </property>
+    <!-- 指定 rm1 的 web 端地址 -->
+    <property>
+        <name>yarn.resourcemanager.webapp.address.rm1</name>
+        <value>hadoop1:8088</value>
+    </property>
+    <!-- 指定 rm1 的内部通信地址 -->
+    <property>
+        <name>yarn.resourcemanager.address.rm1</name>
+        <value>hadoop1:8032</value>
+    </property>
+    <!-- 指定 AM(Application Master) 向 rm1 申请资源的地址 -->
+    <property>
+        <name>yarn.resourcemanager.scheduler.address.rm1</name>
+        <value>hadoop1:8030</value>
+    </property>
+    <!-- 指定供 NM 连接的地址 -->
+    <property>
+        <name>yarn.resourcemanager.resource-tracker.address.rm1</name>
+        <value>hadoop1:8031</value>
+    </property>
+    <!-- ========== rm2 的配置 ========== -->
+    <property>
+        <name>yarn.resourcemanager.hostname.rm2</name>
+        <value>hadoop2</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.webapp.address.rm2</name>
+        <value>hadoop2:8088</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.address.rm2</name>
+        <value>hadoop2:8032</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.scheduler.address.rm2</name>
+        <value>hadoop2:8030</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.resource-tracker.address.rm2</name>
+        <value>hadoop2:8031</value>
+    </property>
+    <!-- 指定 zookeeper 集群的地址 -->
+    <property>
+        <name>yarn.resourcemanager.zk-address</name>
+        <value>hadoop1:2181,hadoop2:2181,hadoop3:2181</value>
+    </property>
+    <!-- 启用自动恢复 -->
+    <property>
+        <name>yarn.resourcemanager.recovery.enabled</name>
+        <value>true</value>
+    </property>
+    <!-- 指定 resourcemanager 的状态信息存储在 zookeeper 集群 -->
+    <property>
+        <name>yarn.resourcemanager.store.class</name>
+        <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
+    </property>
+    <!-- 环境变量的继承 -->
+    <property>
+        <name>yarn.nodemanager.env-whitelist</name>
+        <value>
+            JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
+    </property>
+</configuration>
+```
+
+## 5 分发Hadoop包
+
 ```shell
-#! bin/bash
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
+[root@hadoop1@10.10.10.3 module]# scp -r hadoop-3.3.6 root@hadoop2:/opt/module/
+[root@hadoop1@10.10.10.3 module]# scp -r hadoop-3.3.6 root@hadoop3:/opt/module/
 ```
-2、启动脚本
-```shell
-bash start_docsify.sh
-```
-
-## 基础配置文件介绍
-
-> 其实我们维护一份轻量级的个人&团队文档我们只需要配置以下这几个基本文件就可以了。
-
-|        文件作用        |     文件      |
-| :--------------------: | :-----------: |
-| 基础配置项（入口文件） |  index.html   |
-|      封面配置文件      | _coverpage.md |
-|     侧边栏配置文件     |  _sidebar.md  |
-|     导航栏配置文件     |  _navbar.md   |
-|    主页内容渲染文件    |   README.md   |
-|       浏览器图标       |  favicon.ico  |
-
-
-
-## 基础配置项（index.html）
-
-> 下面是一份基础的配置项模板如下(可直接Copy使用)。
-
-``` html
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Docsify-Guide</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="description" content="Description">
-    <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <!-- 设置浏览器图标 -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-    <!-- 默认主题 -->
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
-</head>
-
-<body>
-    <!-- 定义加载时候的动作 -->
-    <div id="app">加载中...</div>
-    <script>
-        window.$docsify = {
-            // 项目名称
-            name: 'Docsify-Guide',
-            // 仓库地址，点击右上角的Github章鱼猫头像会跳转到此地址
-            repo: 'https://github.com/YSGStudyHards',
-            // 侧边栏支持，默认加载的是项目根目录下的_sidebar.md文件
-            loadSidebar: true,
-            // 导航栏支持，默认加载的是项目根目录下的_navbar.md文件
-            loadNavbar: true,
-            // 封面支持，默认加载的是项目根目录下的_coverpage.md文件
-            coverpage: true,
-            // 最大支持渲染的标题层级
-            maxLevel: 5,
-            // 自定义侧边栏后默认不会再生成目录，设置生成目录的最大层级（建议配置为2-4）
-            subMaxLevel: 4,
-            // 小屏设备下合并导航栏到侧边栏
-            mergeNavbar: true,
-        }
-    </script>
-    <script>
-        // 搜索配置(url：https://docsify.js.org/#/zh-cn/plugins?id=%e5%85%a8%e6%96%87%e6%90%9c%e7%b4%a2-search)
-        window.$docsify = {
-            search: {
-                maxAge: 86400000,// 过期时间，单位毫秒，默认一天
-                paths: auto,// 注意：仅适用于 paths: 'auto' 模式
-                placeholder: '搜索',
-                // 支持本地化
-                placeholder: {
-                    '/zh-cn/': '搜索',
-                    '/': 'Type to search'
-                },
-                noData: '找不到结果',
-                depth: 4,
-                hideOtherSidebarContent: false,
-                namespace: 'Docsify-Guide',
-            }
-        }
-    </script>
-    <!-- docsify的js依赖 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-    <!-- emoji表情支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
-    <!-- 图片放大缩小支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
-    <!-- 搜索功能支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
-    <!--在所有的代码块上添加一个简单的Click to copy按钮来允许用户从你的文档中轻易地复制代码-->
-    <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-</body>
-
-</html>
-```
-
-
-
-## 封面配置文件（_coverpage.md）
-
-> [Docsify官网封面配置教程](https://docsify.js.org/#/zh-cn/cover)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    coverpage: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-
-
-**_coverpage.md**
-
-``` markdown
-<!-- _coverpage.md -->
-
-# Docsify使用指南 
-
-> 💪Docsify使用指南，使用Typora+Docsify打造最强、最轻量级的个人&团队文档。
-
- 简单、轻便 (压缩后 ~21kB)
-- 无需生成 html 文件
-- 众多主题
-
-
-[开始使用 Let Go](/README.md)
-```
-
-![image-20211016010808681](images/image-20211016010808681.png)
-
-## 侧边栏配置文件（_sidebar.md）
-
-> [Docsify官网配置侧边栏教程](https://docsify.js.org/#/zh-cn/more-pages?id=%e5%ae%9a%e5%88%b6%e4%be%a7%e8%be%b9%e6%a0%8f)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    loadSidebar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-> 在index.html基础配置文件中设置了二级目录
-
-![image-20211010133908643](images/image-20211010133908643.png)
-
-**_sidebar.md**
-
-``` markdown
-<!-- _sidebar.md -->
-
-* Typora+Docsify使用指南
-  * [Docsify使用指南](/ProjectDocs/Docsify使用指南.md) <!--注意这里是相对路径-->
-  * [Typora+Docsify快速入门](/ProjectDocs/Typora+Docsify快速入门.md)
-* Docsify部署
-  * [Docsify部署教程](/ProjectDocs/Docsify部署教程.md)
-
-```
-
-![image-20211010140836290](images/image-20211010140836290.png)
-
-## 导航栏配置文件（_navbar.md）
-
-> [Docsify官网配置导航栏教程](https://docsify.js.org/#/zh-cn/custom-navbar?id=%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    loadNavbar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
-
-
-
-**_navbar.md**
-
-``` markdown
-<!-- _navbar.md -->
-
-* 链接到我
-  * [博客园地址](https://www.cnblogs.com/Can-daydayup/)
-  * [Github地址](https://github.com/YSGStudyHards)
-  * [知乎地址](https://www.zhihu.com/people/ysgdaydayup)
-  * [掘金地址](https://juejin.cn/user/2770425031690333/posts)
-  * [Gitee地址](https://gitee.com/ysgdaydayup)
-
-
-* 友情链接
-  * [Docsify](https://docsify.js.org/#/)
-  * [博客园](https://www.cnblogs.com/)
-
-
-```
-
-![image-20211016010857082](images/image-20211016010857082.png)
-
-
-
-## 全文搜索 - Search
-
-[全文搜索 - Search](https://docsify.js.org/#/zh-cn/plugins?id=全文搜索-search)
-
-
-
-## Docsify主题切换
-
-> 注意：切换主题只需要在根目录的index.html切换对应的主题css文件即可
-
-https://docsify.js.org/#/zh-cn/themes
-
-
-
-## 相关教程
-
-* [docsify-github地址](https://github.com/docsifyjs/docsify/#showcase)
-* [docsify快速开始-官方教程](https://docsify.js.org/#/zh-cn/quickstart)
-* [使用开源文档工具docsify，用写博客的姿势写文档](https://www.cnblogs.com/throwable/p/13605289.html)
-* [Docsify使用指南（打造最强、最轻量级的个人&团队文档）](https://www.cnblogs.com/Can-daydayup/p/15413267.html)
-
-
 

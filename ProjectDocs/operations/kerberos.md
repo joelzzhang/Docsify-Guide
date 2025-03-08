@@ -1,315 +1,673 @@
-## Docsify使用指南
+# Kerberos高可用集群搭建
 
-![image-20211016010648260](images/image-20211016010648260.png)
+## 1 环境规划
 
-## Node.js 安装配置
+| IP         | hostname | 角色           | 组件                                   |
+| ---------- | -------- | -------------- | -------------------------------------- |
+| 10.10.10.3 | hadoop1  | Master，Client | krb5-server krb5-workstation krb5-libs |
+| 10.10.10.4 | hadoop2  | Slaver，Client | krb5-server krb5-workstation krb5-libs |
+| 10.10.10.5 | hadoop3  | Client         | krb5-workstation krb5-libs             |
 
-* [nodejs下载地址](http://nodejs.cn/download/)
+## 2 准备工作
 
-* [Node.js最新最详细安装教程](https://blog.csdn.net/Small_Yogurt/article/details/104968169)
+### 2.1 修改hostname
 
-![image-20211001044346349](images/image-20211001044346349.png)
-
-win+r：cmd进入命令提示符窗口，分别输入以下命令查看node和npm的版本能够正常显示版本号，则安装成功：
-
-- node -v：显示安装的nodejs版本
-- npm -v：显示安装的npm版本
-
-![image-20211001044742251](images/image-20211001044742251.png)
-
-
-
-## docsify-cli工具安装
-
-> 推荐全局安装 `docsify-cli` 工具，可以方便地创建及在本地预览生成的文档。
-
-``` javascript
-npm i docsify-cli -g
+```bash
+[root@hadoop3 ~]# vim /etc/hostname 
+hadoop1
 ```
 
-![image-20211001045416111](images/image-20211001045416111.png)
+### 2.2 修改hosts
 
-
-
-## 项目初始化
-
-> 如果想在项目的 `./docs(文件名可以按自己的想法来)` 目录里写文档，直接通过 `init` 初始化项目。
-
-``` javascript
-docsify init ./Docsify-Guide
+```bash
+[root@hadoop3 ~]# vim /etc/hosts
+10.10.10.3 hadoop1
+10.10.10.4 hadoop2
+10.10.10.5 hadoop3
 ```
 
+### 2.3 ssh免密登录
 
-
-初始化成功后，可以看到 `./docs` 目录下创建的几个文件
-
-- `index.html` 入口文件
-- `README.md` 会做为主页内容渲染
-- `.nojekyll` 用于阻止 GitHub Pages 忽略掉下划线开头的文件
-
-直接编辑 `docs/README.md` 就能更新文档内容，当然也可以[添加更多页面](https://docsify.js.org/#/zh-cn/more-pages)。
-
-
-
-## 本地运行docsify创建的项目
-
-> 通过运行 `docsify serve 项目名称 ` 启动一个本地服务器，可以方便地实时预览效果。默认访问地址 [http://localhost:3000](http://localhost:3000/) 。
-
-``` javascript
-docsify serve Docsify-Guide
+```bash
+# 在本机生成非对称密钥
+[root@hadoop3 ~]# ssh-keygen
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:DuGJdvNDDXvXVehdVnCZ3zSGMKIXxnuCz1sQUi00FBo root@hadoop1
+The key's randomart image is:
++---[RSA 2048]----+
+|       E=Xoo. ooB|
+|       .=++....*=|
+|      .o+.+  ..+*|
+|     o +.B . ...+|
+|    o * S * . .  |
+|   . . * + o     |
+|        + o      |
+|         o       |
+|                 |
++----[SHA256]-----+
+# 查看生成的密钥
+[root@hadoop3 ~]# ll
+总用量 16
+-rw-------. 1 root root  987 10月 31 16:32 authorized_keys
+-rw-------. 1 root root 1679 11月  9 16:05 id_rsa
+-rw-r--r--. 1 root root  394 11月  9 16:05 id_rsa.pub
+-rw-r--r--. 1 root root  532 11月  2 09:49 known_hosts
+# 复制公钥到其他机器
+[root@hadoop3 ~]# ssh-copy-id -i ~/.ssh/id_rsa.pub  root@hadoop2
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@hadoop2's password:
 ```
 
-![image-20211010124211458](images/image-20211010124211458.png)
+### 2.4 安装ntp服务
 
-## Linux下后台部署项目
-在Linux下如果使用下面的命令启动docsify，会发现一旦关闭了xShell，那么就访问不了了，具体问题还不清楚，下面说种可以在后台运行的方法；
-```shell
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
-```
-通过编写shell脚本，将上面代码放到脚本里面，再启动就可以了；    
-1、创建脚本：vim start_docsify.sh
-```shell
-#! bin/bash
-nohup docsify serve 项目地址 --port=80 > /dev/null 2>&1 &
-```
-2、启动脚本
-```shell
-bash start_docsify.sh
-```
+- 搭建Kerberos集群的时候需要各机器的时间保持一致，因此需要安装时间同步器
 
-## 基础配置文件介绍
+  ```bash
+  [root@hadoop3 ~]# yum -y install ntp
+  ```
 
-> 其实我们维护一份轻量级的个人&团队文档我们只需要配置以下这几个基本文件就可以了。
+- 修改ntp配置
 
-|        文件作用        |     文件      |
-| :--------------------: | :-----------: |
-| 基础配置项（入口文件） |  index.html   |
-|      封面配置文件      | _coverpage.md |
-|     侧边栏配置文件     |  _sidebar.md  |
-|     导航栏配置文件     |  _navbar.md   |
-|    主页内容渲染文件    |   README.md   |
-|       浏览器图标       |  favicon.ico  |
+  ```bash
+  [root@hadoop3 ~]# vim /etc/ntp.conf
+  #系统时间和BIOS时间的偏差记录
+  driftfile /var/lib/ntp/drift
+  
+  #restrict 控制相关权限。
+  #语法为： restrict IP地址 mask 子网掩码 参数
+  #其中IP地址也可以是default ，default 就是指所有的IP
+  #参数有以下几个：
+  #ignore  ：关闭所有的 NTP 联机服务
+  #nomodify：客户端不能更改服务端的时间参数，但是客户端可以通过服务端进行网络校时。
+  #notrust ：客户端除非通过认证，否则该客户端来源将被视为不信任子网
+  #noquery ：不提供客户端的时间查询：用户端不能使用ntpq，ntpc等命令来查询ntp服务器
+  #notrap ：不提供trap远端登陆：拒绝为匹配的主机提供模式 6 控制消息陷阱服务。陷阱服务是 ntpdq #控制消息协议的子系统，用于远程事件日志记录程序。
+  #nopeer ：用于阻止主机尝试与服务器对等连接，并允许欺诈性服务器控制时钟
+  #kod ： 访问违规时发送KoD包(请求过于频繁)。
+  #restrict -6 表示IPV6地址的权限设置。
+  
+  #允许时钟源同步，客户端不能更改服务端的时间参数，但是客户端可以通过服务端进行网络校时，不提供trap远端登陆，阻止主机尝试与服务器对等，并允许欺诈性服务器控制时钟，不提供客户端的时间查询
+  restrict default nomodify notrap nopeer noquery
+  
+  #允许本机查询
+  restrict 127.0.0.1
+  restrict ::1
+  
+  #允许内网所有机器（10.0.0.0/8）同步时间，如果不添加该约束默认允许所有IP访问本机同步服务
+  restrict 10.0.0.0 mask 255.0.0.0 nomodify
+  
+  #外部时间服务器不可用时，以本地时间作为时间服务
+  #在NTP协议中，IP地址127.127.1.0是特殊的，它表示本地时钟(Local Clock)
+  server 127.127.1.0
+  #stratum 10:设置本地时钟的层级，层级数值越高，优先级越低。
+  #fudge: 用于配置本地时钟（本地时钟作为备份）
+  fudge 127.127.1.0 stratum 10
+  
+  #指定阿里时钟服务器地址作为上层的时钟源
+  #iburst表示加速同步,在第一次联系时发送一串包，以便快速建立联系
+  server ntp1.aliyun.com iburst
+  
+  includefile /etc/ntp/crypto/pw
+  
+  keys /etc/ntp/keys
+  
+  disable monitor
+  logfile /var/log/ntp/ntp.log
+  ```
+
+- 启动ntpd，并设置开机启动
+
+  ```bash
+  #启动
+  [root@hadoop3 ~]# systemctl start ntpd
+  #查看状态
+  [root@hadoop3 ~]# systemctl status ntpd
+  #开机启动
+  [root@hadoop3 ~]# systemctl enable ntpd
+  ```
+
+- 同步服务器时间
+
+  ```bash
+  [root@hadoop3 ~]# ntpdate ntp1.aliyun.com
+  [root@hadoop3 ~]# ntpq -p
+       remote           refid      st t when poll reach   delay   offset  jitter
+  ==============================================================================
+  +120.25.115.20   10.137.53.7      2 u  946 1024  135   29.754   -5.681   2.907
+  *203.107.6.88    100.107.25.114   2 u  493 1024  347   40.292   -2.793   3.989
+  [root@hadoop3 ~]# ntpstat 
+  synchronised to NTP server (203.107.6.88) at stratum 3
+     time correct to within 92 ms
+     polling server every 1024 s
+  [root@hadoop3 ~]# ntpdate -u 192.168.31.100
+  ```
+
+#### 2.4.1 ntp知识拓展
+
+ntp常用命令：
+
+1. `ntpdate`：从NTP服务器获取时间并设置本地系统时间。语法：`ntpdate [选项] 服务器地址`
+
+   常用选项：
+
+    - `-q`：静默模式，不输出任何信息。
+    - `-u`：更新所有已配置的服务器。
+    - `-s`：指定服务器的IP地址或主机名。
+    - `-b`：指定要使用的回显端口。
+
+2. `ntpq`：查询NTP服务器的状态和统计信息。语法：`ntpq [选项]`
+
+   常用选项：
+
+    - `-c peers`：显示与所有对等体（peer）的连接状态。
+    - `-p`：显示当前选定的对等体的详细信息。
+    - `-n`：以数字形式显示时间戳。
+    - `-t`：显示所有跟踪日志文件的内容。
+
+3. `timedatectl`：查询和设置系统时间和时区。语法：`timedatectl [选项] [动作]`
+
+   常用选项：
+
+    - `--no-ask-password`：在需要输入密码的情况下自动回答“yes”。
+    - `--list-timezones`：列出所有可用的时区。
+    - `--set-timezone`：设置系统的时区。
+    - `--show-timezone`：显示当前系统的时区。
+
+4. `chronyd`：管理Chrony守护进程，用于替代NTP服务。语法：`chronyd [选项] [动作]`
+
+   常用选项：
+
+    - `-q`：静默模式，不输出任何信息。
+    - `-c`：启动Chrony守护进程。
+    - `-h`：显示帮助信息。
+    - `-V`：显示版本信息。
+
+`ntpq -p`的输出说明了当前计算机与ntp server间的信息，具体说明如下：
+
+| 参数   | 描述                         |
+| ------ | ---------------------------- |
+| remote | 远程服务器的IP地址或名称     |
+| refid  | 引用源标识符                 |
+| st     | 层级编号                     |
+| t      | 类型（例如u表示unspecified） |
+| when   | 最后一次更新时间             |
+| poll   | 当前轮询周期                 |
+| reach  | 可达性标志                   |
+| delay  | 延迟时间（毫秒）             |
+| offset | 偏移量（毫秒）               |
+| jitter | 抖动（毫秒）                 |
+
+> 例如以下样例输出告诉我们该机器已经与`ntp1.aliyun.com`（120.25.115.20）建立了联系，最近一次与时间同步服务同步为946毫秒前。延迟时间约为29.754毫秒，偏移量约-5.681毫秒，抖动值为2.907毫秒。
+>
+> ```bash
+> [root@hadoop3 ~]# ntpq -p
+>      remote           refid      st t when poll reach   delay   offset  jitter
+> ==============================================================================
+> +120.25.115.20   10.137.53.7      2 u  946 1024  135   29.754   -5.681   2.907
+> *203.107.6.88    100.107.25.114   2 u  493 1024  347   40.292   -2.793   3.989
+> ```
+>
+> 此外，ntp服务还有其他有用的信息，例如通过运行ntpstat命令查看ntp服务器是否处于活动状态以及最近的一次同步结果。
 
 
+## 3 安装Kerberos
 
-## 基础配置项（index.html）
+### 3.1 安装Kerberos主节点
 
-> 下面是一份基础的配置项模板如下(可直接Copy使用)。
+- hadoop1节点为主节点，需安装服务端和客户端
 
-``` html
-<!DOCTYPE html>
-<html lang="en">
+  ```bash
+  [root@hadoop3 ~]# yum -y install krb5-server krb5-workstation krb5-libs
+  ```
 
-<head>
-    <meta charset="UTF-8">
-    <title>Docsify-Guide</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="description" content="Description">
-    <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <!-- 设置浏览器图标 -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-    <!-- 默认主题 -->
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
-</head>
+- hadoop2节点为从节点，需安装服务端和客户端
 
-<body>
-    <!-- 定义加载时候的动作 -->
-    <div id="app">加载中...</div>
-    <script>
-        window.$docsify = {
-            // 项目名称
-            name: 'Docsify-Guide',
-            // 仓库地址，点击右上角的Github章鱼猫头像会跳转到此地址
-            repo: 'https://github.com/YSGStudyHards',
-            // 侧边栏支持，默认加载的是项目根目录下的_sidebar.md文件
-            loadSidebar: true,
-            // 导航栏支持，默认加载的是项目根目录下的_navbar.md文件
-            loadNavbar: true,
-            // 封面支持，默认加载的是项目根目录下的_coverpage.md文件
-            coverpage: true,
-            // 最大支持渲染的标题层级
-            maxLevel: 5,
-            // 自定义侧边栏后默认不会再生成目录，设置生成目录的最大层级（建议配置为2-4）
-            subMaxLevel: 4,
-            // 小屏设备下合并导航栏到侧边栏
-            mergeNavbar: true,
-        }
-    </script>
-    <script>
-        // 搜索配置(url：https://docsify.js.org/#/zh-cn/plugins?id=%e5%85%a8%e6%96%87%e6%90%9c%e7%b4%a2-search)
-        window.$docsify = {
-            search: {
-                maxAge: 86400000,// 过期时间，单位毫秒，默认一天
-                paths: auto,// 注意：仅适用于 paths: 'auto' 模式
-                placeholder: '搜索',
-                // 支持本地化
-                placeholder: {
-                    '/zh-cn/': '搜索',
-                    '/': 'Type to search'
-                },
-                noData: '找不到结果',
-                depth: 4,
-                hideOtherSidebarContent: false,
-                namespace: 'Docsify-Guide',
-            }
-        }
-    </script>
-    <!-- docsify的js依赖 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-    <!-- emoji表情支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
-    <!-- 图片放大缩小支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
-    <!-- 搜索功能支持 -->
-    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
-    <!--在所有的代码块上添加一个简单的Click to copy按钮来允许用户从你的文档中轻易地复制代码-->
-    <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-</body>
+  ```bash
+  [root@hadoop3 ~]# yum -y install krb5-server krb5-workstation krb5-libs
+  ```
 
-</html>
-```
+- hadoop3安装客户端，只需安装客户端即可
 
+  ```bash
+  [root@hadoop3 ~]# yum -y install krb5-workstation krb5-libs
+  ```
 
+### 3.2 配置Kerberos服务相关文件
 
-## 封面配置文件（_coverpage.md）
+- 修改`krb5.conf`
 
-> [Docsify官网封面配置教程](https://docsify.js.org/#/zh-cn/cover)
-
-**index.html**
-
-``` html
-<!-- index.html -->
-
-<script>
-  window.$docsify = {
-    coverpage: true
+  ```bash
+  [root@hadoop3 ~]# vim etc/krb5.conf
+  # Configuration snippets may be placed in this directory as well
+  includedir /etc/krb5.conf.d/
+  
+  # 块配置日志相关
+  [logging]
+   default = FILE:/var/log/krb5libs.log
+   kdc = FILE:/var/log/krb5kdc.log
+   admin_server = FILE:/var/log/kadmind.log
+  
+  # 配置默认的设置，包括ticket的生存周期等
+  [libdefaults]
+   dns_lookup_realm = false
+   ticket_lifetime = 24h
+   renew_lifetime = 7d
+   forwardable = true
+  #  rdns = false
+   pkinit_anchors = FILE:/etc/pki/tls/certs/ca-bundle.crt
+  # 默认的realm。如 HADOOP.COM，当客户端在连接或者获取主体的时候，当没有输入领域的时候，该值为默认值(列如：使用kinit admin/admin 获取主体的凭证时，没有输入领域，而传到kdc服务器的时候，会变成 admin/admin@HADOOP.COM )
+   default_realm = HADOOP.COM
+  #  default_ccache_name = KEYRING:persistent:%{uid}
+  
+  # 表示一个公司或者一个组织。逻辑上的授权认证范围，可以配置多个realm
+  [realms]
+  HADOOP.COM = {
+  # 代表要kdc的位置。格式是机器名
+   kdc = hadoop1
+   kdc = hadoop2 #添加从节点host
+  # 代表admin的位置。格式是机器名
+   admin_server = hadoop1
   }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
+  
+  # Kerberos内的域和主机名的域的一个对应关系
+  [domain_realm]
+  .hadoop1.com = HADOOP.COM
+  hadoop1.com = HADOOP.COM
+  ```
+
+- 修改`kdc.conf`
+
+  ```bash
+  [root@hadoop3 ~]# vi /var/kerberos/krb5kdc/kdc.conf
+  [kdcdefaults]
+   kdc_ports = 88
+   kdc_tcp_ports = 88
+  
+  [realms]
+   HADOOP.COM = {
+    #master_key_type = aes256-cts
+    acl_file = /var/kerberos/krb5kdc/kadm5.acl
+    dict_file = /usr/share/dict/words
+    admin_keytab = /var/kerberos/krb5kdc/kadm5.keytab
+    supported_enctypes = aes256-cts:normal aes128-cts:normal des3-hmac-sha1:normal arcfour-hmac:normal camellia256-cts:normal camellia128-cts:normal des-hmac-sha1:normal des-cbc-md5:normal des-cbc-crc:normal
+   }
+  ```
+
+- 修改`kadm5.acl`
+
+  ```bash
+  [root@hadoop3 ~]# vi /var/kerberos/krb5kdc/kadm5.acl
+  */admin@HADOOP.COM	*
+  ```
+
+  第一列： `*/admin@HADOOP.COM`  对应  `Kerberos_principal`  表示主体(`principal`)名称
+
+  第二列：`*` 对应 `permissions`  表示权限
+
+  > 该配置文件主要是用于管理员登陆的acl配置格式，上述的配置表示以`/admin@HADOOP.COM`结尾的用户拥有`*`(`all` 也就是所有)权限，具体配置可根据项目来是否缩小权限。
+
+### 3.3 创建Kerberos数据库
+
+- 初始化数据库
+
+  ```bash
+  # 该命令会在 /var/kerberos/krb5kdc/ 目录下创建 principal 数据库
+  [root@hadoop3 ~]# kdb5_util create -s -r HADOOP.COM
+  [root@hadoop3 ~]# ll
+  总用量 32
+  -rw-------. 1 root root 16384 11月  8 15:13 principal
+  -rw-------. 1 root root  8192 11月  3 15:48 principal.kadm5
+  -rw-------. 1 root root     0 11月  3 15:48 principal.kadm5.lock
+  -rw-------. 1 root root     0 11月  8 15:13 principal.ok
+  ```
+
+  >  -r 指定域名(也就是在krb5.conf文件[realms]组里面定义的域名)
+  >
+  >  -s 选项指定将数据库的主节点密钥存储在文件中，从而可以在每次启动KDC时自动重新生成主节点密钥
+- 创建好数据库后重启kdc，并设置开机启动
+
+  ```bash
+  [root@hadoop3 ~]# systemctl start krb5kdc
+  [root@hadoop3 ~]# systemctl status krb5kdc
+  [root@hadoop3 ~]# systemctl enable krb5kdc #开启自启
+  #修改配置文件后重启krb5kdc时需要刷新配置
+  [root@hadoop3 ~]# systemctl daemon-reload
+  
+  [root@hadoop3 ~]# systemctl start kadmin
+  [root@hadoop3 ~]# systemctl status kadmin
+  [root@hadoop3 ~]# systemctl enable kadmin #开启自启
+  
+  #记得关闭防火墙
+  [root@hadoop3 ~]# systemctl status firewalld
+  [root@hadoop3 ~]# systemctl stop firewalld
+  [root@hadoop3 ~]# systemctl status firewalld
+  ```
+
+
+### 3.4 创建 kerberos的管理员
+
+```bash
+[root@hadoop3 ~]# kadmin.local 
+Authenticating as principal admin/admin@HADOOP.COM with password.
+kadmin.local:  addprinc admin/admin@HADOOP.COM
 ```
 
+### 3.5 生成kerberos管理员密钥文件
 
-
-**_coverpage.md**
-
-``` markdown
-<!-- _coverpage.md -->
-
-# Docsify使用指南 
-
-> 💪Docsify使用指南，使用Typora+Docsify打造最强、最轻量级的个人&团队文档。
-
- 简单、轻便 (压缩后 ~21kB)
-- 无需生成 html 文件
-- 众多主题
-
-
-[开始使用 Let Go](/README.md)
+```bash
+[root@hadoop3 ~]# kadmin.local 
+Authenticating as principal admin/admin@HADOOP.COM with password.
+kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admin/admin@HADOOP.COM
 ```
 
-![image-20211016010808681](images/image-20211016010808681.png)
+> -k 指定keytab文件的位置
+>
+> -norandkey 表示生成keytab文件时不更新密码，还是用原来的密码
 
-## 侧边栏配置文件（_sidebar.md）
+### 3.6 安装Kerberos从节点
 
-> [Docsify官网配置侧边栏教程](https://docsify.js.org/#/zh-cn/more-pages?id=%e5%ae%9a%e5%88%b6%e4%be%a7%e8%be%b9%e6%a0%8f)
+1. 安装Kerberos服务端和客户端
 
-**index.html**
+   ```bash
+   [root@hadoop3 ~]# yum -y install krb5-server krb5-workstation krb5-libs
+   ```
 
-``` html
-<!-- index.html -->
+2. 将master上的几个文件拷贝到slave服务器
 
-<script>
-  window.$docsify = {
-    loadSidebar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
+   ```bash
+   #  krb5.conf、kdc.conf、kadmin5.acl、master key stash file
+   [root@hadoop3 ~]# rsync /etc/krb5.conf hadoop2:/etc/
+   [root@hadoop3 ~]# rsync /var/kerberos/krb5kdc/kadm5.acl hadoop2:/var/kerberos/krb5kdc/
+   [root@hadoop3 ~]# rsync /var/kerberos/krb5kdc/kdc.conf hadoop2:/var/kerberos/krb5kdc/
+   [root@hadoop3 ~]# scp /var/kerberos/krb5kdc/.k5.HADOOP.COM hadoop2:/var/kerberos/krb5kdc/
+   ```
 
-> 在index.html基础配置文件中设置了二级目录
+3. 在master节点上生成master、slave节点的凭证，并复制host.keytab到slave节点
 
-![image-20211010133908643](images/image-20211010133908643.png)
+   ```bash
+   [root@hadoop3 ~]# kadmin.local 
+   Authenticating as principal admin/admin@HADOOP.COM with password.
+   kadmin.local:  addprinc host/hadoop1 #生成master节点的host凭证，hadoop1是master的hostname
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/host.keytab host/hadoop1
+   kadmin.local:  addprinc host/hadoop2 #生成master节点的host凭证，hadoop2是slave的hostname
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/host.keytab host/hadoop2
+   # 凭证和keytab文件生成完成后通过kadmin.local: q退出kadmin命令
+   # 复制host.keytab文件到slave节点
+   [root@hadoop3 ~]# scp /var/kerberos/krb5kdc/keytab/host.keytab hadoop2:/var/kerberos/krb5kdc/keytab/
+   ```
 
-**_sidebar.md**
+4. 在slave上创建数据库
 
-``` markdown
-<!-- _sidebar.md -->
+   ```bash
+   [root@hadoop3 ~]# kdb5_util create -s -r HADOOP.COM
+   Loading random data
+   Initializing database '/var/kerberos/krb5kdc/principal' for realm 'HADOOP.COM',
+   master key name 'K/M@HADOOP.COM'
+   You will be prompted for the database Master Password.
+   It is important that you NOT FORGET this password.
+   Enter KDC database master key: 
+   Re-enter KDC database master key to verify:
+   ```
 
-* Typora+Docsify使用指南
-  * [Docsify使用指南](/ProjectDocs/Docsify使用指南.md) <!--注意这里是相对路径-->
-  * [Typora+Docsify快速入门](/ProjectDocs/Typora+Docsify快速入门.md)
-* Docsify部署
-  * [Docsify部署教程](/ProjectDocs/Docsify部署教程.md)
+5. 在slave服务器上创建kpropd.acl文件，并配置上host的主体
 
-```
+   ```bash
+   [root@hadoop3 ~]# vim /var/kerberos/krb5kdc/kpropd.acl
+   host/hadoop1@HADOOP.COM
+   host/hadoop2@HADOOP.COM
+   ```
 
-![image-20211010140836290](images/image-20211010140836290.png)
+6. 在slave上启动kpropd服务
 
-## 导航栏配置文件（_navbar.md）
+   ```bash
+   # 修改KPROPD_ARGS参数，设置自定义的host.keytab文件，默认为/etc/krb5.keytab
+   [root@hadoop3 ~]# vim /etc/sysconfig/kprop
+   KPROPD_ARGS=-s /var/kerberos/krb5kdc/keytab/host.keytab
+   
+   #启动kprop并设置开机启动
+   [root@hadoop3 ~]# systemctl daemon-reload
+   [root@hadoop3 ~]# systemctl start kprop
+   [root@hadoop3 ~]# systemctl status kprop
+   [root@hadoop3 ~]# systemctl enable kprop
+   ```
 
-> [Docsify官网配置导航栏教程](https://docsify.js.org/#/zh-cn/custom-navbar?id=%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
+7. 在master上将相关数据同步到slave上
 
-**index.html**
+   ```bash
+   #备份数据库
+   [root@hadoop3 ~]# kdb5_util dump /var/kerberos/krb5kdc/dump/kdc.dump
+   #同步到slave节点
+   [root@hadoop1 keytab]# kprop -f /var/kerberos/krb5kdc/dump/kdc.dump -s /var/kerberos/krb5kdc/keytab/host.keytab  hadoop2
+   Database propagation to hadoop2: SUCCEEDED
+   ```
 
-``` html
-<!-- index.html -->
+8. slave上/var/kerberos/krb5kdc/会多出一些文件
 
-<script>
-  window.$docsify = {
-    loadNavbar: true
-  }
-</script>
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-```
+   ```bash
+   [root@hadoop2 krb5kdc]# ls -la
+   总用量 60
+   drwxr-xr-x. 3 root root   200 11月  9 15:45 .
+   drwxr-xr-x. 4 root root    33 11月  9 10:27 ..
+   -rw-------. 1 root root 15341 11月  9 15:45 from_master
+   -rw-------. 1 root root    75 11月  9 14:52 .k5.HADOOP.COM
+   -rw-------. 1 root root    21 11月  9 10:40 kadm5.acl
+   -rw-------. 1 root root   450 11月  9 10:41 kdc.conf
+   drwxr-xr-x. 2 root root    25 11月  9 15:11 keytab
+   -rw-r--r--. 1 root root    48 11月  9 11:13 kpropd.acl
+   -rw-------. 1 root root 20480 11月  9 15:45 principal
+   -rw-------. 1 root root  8192 11月  9 15:45 principal.kadm5
+   -rw-------. 1 root root     0 11月  9 14:42 principal.kadm5.lock
+   -rw-------. 1 root root     0 11月  9 15:45 principal.ok
+   
+   ```
+
+9. 至此，可以启动slave上的kdc服务
+
+   ```bash
+   #修改配置文件后重启krb5kdc时需要刷新配置
+   [root@hadoop3 ~]# systemctl daemon-reload
+   [root@hadoop3 ~]# systemctl start krb5kdc
+   [root@hadoop3 ~]# systemctl status krb5kdc
+   [root@hadoop3 ~]# systemctl enable krb5kdc #开启自启
+   ```
+
+10. 测试主从是否生效(成功)
+
+    a. 将master节点的keytab文件都拷贝到客户端
+
+    b. 通过kinit命令来查验keytab是否可以正常验证
+
+    ```bash
+    [root@hadoop3 ~]# kinit -kt /var/kerberos/krb5kdc/keytab/hdfs.keytab hdfs/hadoop3
+    ```
+
+    轮流停掉master、slave节点的kdc服务，然后在客户端通过kinit命令来验证是否生效
+
+11. 常见问题
+
+    - kprop: 没有那个文件或目录
+
+      ```bash
+      [root@hadoop3 ~]# kprop -f /var/kerberos/krb5kdc/dump/kdc.dump hadoop2
+      kprop: 没有那个文件或目录 while getting initial credentials
+      # 因为在/etc/目录下，找不到host/hadoop1和host/hadoop2的keytab文件（krb5.keytab），所以会报这个错，通过-s指定keytab文件
+      [root@hadoop3 ~]# kprop -f /var/kerberos/krb5kdc/dump/kdc.dump -s /var/kerberos/krb5kdc/keytab/host.keytab  hadoop2
+      Database propagation to hadoop2: SUCCEEDED
+      ```
+
+    - Server rejected authentication
+
+      ```bash
+      kprop: Server rejected authentication (during sendauth exchange) while authenticating to server
+      kprop: Service key not available signalled from server
+      Error text from server: Service key not available
+      # 该问题是因为slave节点的/etc目录下没有krb5.keytab文件，以下命令可解决
+      [root@hadoop3 ~]# scp /var/kerberos/krb5kdc/keytab/host.keytab hadoop2:/etc/krb5.keytab
+      # 或者用以下方法来解决，从kprop.service得知kprop启动是由/usr/sbin/kpropd命令启动的，查看命令
+      # /usr/sbin/kpropd -h
+      # Usage: /usr/sbin/kpropd [-r realm] [-s srvtab] [-dS] [-f slave_file]
+      # 	[-F kerberos_db_file ] [-p kdb5_util_pathname]
+      # 	[-x db_args]* [-P port] [-a acl_file]
+      # 	[-A admin_server]
+      # kprop.service启动的时候会给定一个KPROPD_ARGS参数
+      # 通过kpropd -h得知kprop是通过-s来指定自定义的keytab文件，因此可以修改/etc/sysconfig/kprop下的KPROPD_ARGS参数，加上-s /var/kerberos/krb5kdc/keytab/host.keytab即可
+      [root@hadoop3 ~]# vim /etc/sysconfig/kprop
+      KPROPD_ARGS=-s /var/kerberos/krb5kdc/keytab/host.keytab
+      ```
+
+    - slave节点的kdc服务启动报错
+
+      ```bash
+      krb5kdc: Unable to decrypt latest master key with the provided master key
+       - while fetching master keys list for realm HADOOP.COM
+      #该问题是由备节点使用的不是主节点拷贝过来的.k5.CC.LOCAL，以下命令可解决
+      [root@hadoop3 ~]# rsync .k5.HADOOP.COM hadoop2:/var/kerberos/krb5kdc/
+      ```
 
 
+### 3.7 kerberos常用命令
 
-**_navbar.md**
+- **添加主体(principal)**
 
-``` markdown
-<!-- _navbar.md -->
+  以下这几个命令都可以创建主体(相当于用户)
 
-* 链接到我
-  * [博客园地址](https://www.cnblogs.com/Can-daydayup/)
-  * [Github地址](https://github.com/YSGStudyHards)
-  * [知乎地址](https://www.zhihu.com/people/ysgdaydayup)
-  * [掘金地址](https://juejin.cn/user/2770425031690333/posts)
-  * [Gitee地址](https://gitee.com/ysgdaydayup)
+  ```bash
+  add_principal, addprinc, ank 
+  # 服务器操作测试：
+  kadmin.local 进入到控制台控制台是以kadmin.local开头的，如下：
+  kadmin.local: addprinc hdfs/hadoop1    #创建主体(用户)yjt/yjt 需要输入密码
+  kadmin.local: addprinc -pw 123456 hdfs/hadoop1 # 创建yjt/yjt主体，密码使用-pw指定
+  kadmin.local: addprinc -randkey hdfs/hadoop1 #生成随机密码
+  ```
 
+- **删除主体**
 
-* 友情链接
-  * [Docsify](https://docsify.js.org/#/)
-  * [博客园](https://www.cnblogs.com/)
+  删除主体，删除的时候会询问是否删除
 
+  ```bash
+  delete_principal, delprinc
+  # 服务器操作测试：
+  kadmin.local: delprinc hdfs/hadoop1
+  ```
 
-```
+- **修改凭证**
 
-![image-20211016010857082](images/image-20211016010857082.png)
+  修改用户，比如修改延迟到期时间
 
-
-
-## 全文搜索 - Search
-
-[全文搜索 - Search](https://docsify.js.org/#/zh-cn/plugins?id=全文搜索-search)
-
-
-
-## Docsify主题切换
-
-> 注意：切换主题只需要在根目录的index.html切换对应的主题css文件即可
-
-https://docsify.js.org/#/zh-cn/themes
+  ```bash
+  modify_principal, modprinc
+  # 服务器操作测试：
+  kadmin.local: modprinc hdfs/hadoop1
+  ```
 
 
+- **列出当前凭证**
 
-## 相关教程
+  列出当前凭证
 
-* [docsify-github地址](https://github.com/docsifyjs/docsify/#showcase)
-* [docsify快速开始-官方教程](https://docsify.js.org/#/zh-cn/quickstart)
-* [使用开源文档工具docsify，用写博客的姿势写文档](https://www.cnblogs.com/throwable/p/13605289.html)
-* [Docsify使用指南（打造最强、最轻量级的个人&团队文档）](https://www.cnblogs.com/Can-daydayup/p/15413267.html)
+  ```bash
+  list_principals, listprincs, get_principals, getprincs
+  # 服务器操作测试：
+  kadmin.local: listprincs
+  ```
 
 
+- **获取凭据信息**
+
+  获取凭据信息的两个命令
+
+  ```bash
+  get_principal, getprinc
+  # 服务器操作测试：
+  kadmin.local: getprinc hdfs/hadoop1
+  ```
+
+
+- **生成dump文件**
+
+  生成当前Kerberos数据库的备份文件，如主从同步时可以使用该命令来备份数据库，再通过kprop来恢复
+
+  ```bash
+  [root@hadoop3 ~]# kdb5_util dump /var/kerberos/krb5kdc/kdc.dump
+  [root@hadoop3 ~]# ll
+  总用量 20
+  -rw-------. 1 root root 13204 11月  9 10:18 kdc.dump
+  -rw-------. 1 root root     1 11月  9 10:18 kdc.dump.dump_ok
+  ```
+
+
+- **修改认证主体的密码**
+
+  ```bash
+  [root@hadoop3 ~]# kpasswd hdfs/hadoop1
+  ```
+
+
+- **获取凭证**
+
+  ```bash
+  [root@hadoop3 ~]# kinit  hdfs/hadoop1    #基于密码，需要输入密码
+  [root@hadoop3 ~]# kinit -kt hdfs.keytab hdfs/hadoop1    #基于keytab文件
+  ```
+
+
+- **查看当前的凭证**
+
+  ```bash
+  [root@hadoop3 ~]# klist 
+  Ticket cache: FILE:/tmp/krb5cc_0
+  Default principal: nm/yjt@HADOOP.COM
+  ```
+
+- **删除当前认证的缓存**
+
+  ```bash
+  [root@hadoop3 ~]# kdestroy 
+  ```
+
+
+- **查看密钥文件的认证主体列表**
+
+  ```bash
+  [root@hadoop3 ~]# klist -ket hdfs.keytab 
+  Keytab name: FILE:hdfs.keytab
+  ```
+
+### 3.8 主体票据有效期修改
+
+- 修改client端的`/etc/krb5.conf`
+
+  ```ini
+  ticket_lifetime = 24h
+  renew_lifetime = 180d
+  ```
+
+- 修改server端的`/var/kerberos/krb5kdc/kdc.conf`
+
+  ```ini
+  max_life = 1d 0h 0m 0s
+  max_renewable_life = 180d 0h 0m 0s
+  ```
+
+- 然后修改krbtgt账号和业务账号的`maxlife`和`maxrenewlife`的值
+
+  ```shell
+  modprinc -maxlife 1d -maxrenewlife 180d +allow_renewable krbtgt/CQ.CTC.COM@CQ.CTC.COM
+  modprinc -maxlife 1d -maxrenewlife 180d +allow_renewable flink/emrint01@CQ.CTC.COM
+  modprinc -maxlife 1d -maxrenewlife 180d +allow_renewable flink/emrint02@CQ.CTC.COM
+  ```
+
+- 手动刷新设置`renewable_lifetime`
+
+  ```shell
+  kinit -r 80days
+  ```
+
+  
 
