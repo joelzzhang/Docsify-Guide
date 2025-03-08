@@ -4,8 +4,8 @@
 * MacOS手册
   *  [MacOS使用指南](ProjectDocs/mac/mac.md)
 * 运维手册
-  *  [Kerberos认证](ProjectDocs/operations/kerberos.md)
-  *  [Chrony时钟同步](ProjectDocs/operations/chrony.md)
+  *  [Kerberos集群部署](ProjectDocs/operations/kerberos.md)
+  *  [Linux时钟同步](ProjectDocs/operations/time-sync.md)
   *  [Linux磁盘管理](ProjectDocs/operations/linux-disk.md)
   *  [HADOOP高可用集群部署](ProjectDocs/operations/hadoop.md)
   *  [Prometheus部署](ProjectDocs/operations/prometheus.md)
