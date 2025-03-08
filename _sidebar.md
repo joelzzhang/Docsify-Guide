@@ -23,7 +23,7 @@
   *  [Spring源码解读](ProjectDocs/java/spring.md)
 * Python开发手册
   *  [Python语法](ProjectDocs/python/mac.md)
-* PAAS组件
+* PAAS组件知识点
   *  [Mysql数据库](ProjectDocs/development/mysql.md)
   *  [Redis知识](ProjectDocs/development/redis.md)
 * 大数据开发手册
