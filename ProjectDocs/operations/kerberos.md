@@ -70,7 +70,7 @@ root@hadoop2's password:
 
 #### 2.4 安装ntp服务
 
-参考[Linux时钟同步](time-sync.md)章节
+参考[Linux时钟同步](../operations/time-sync.md)章节
 
 
 ### 3.安装Kerberos
