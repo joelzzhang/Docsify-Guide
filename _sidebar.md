@@ -19,14 +19,15 @@
 * 前端开发手册
   * [Nodejs使用手册](ProjectDocs/frontend/node.md)
 * JAVA开发手册
-  *  [Java环境配置](ProjectDocs/development/java.md)
-  *  [Spring源码解读](ProjectDocs/development/spring.md)
+  *  [Java环境配置](ProjectDocs/java/java.md)
+  *  [Spring源码解读](ProjectDocs/java/spring.md)
+* Python开发手册
+  *  [Python语法](ProjectDocs/python/mac.md)
+* PAAS组件
   *  [Mysql数据库](ProjectDocs/development/mysql.md)
   *  [Redis知识](ProjectDocs/development/redis.md)
 * 大数据开发手册
   *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
-* Python开发手册
-  *  [Python语法](ProjectDocs/python/mac.md)
 
 
 
