@@ -25,3 +25,8 @@
   *  [Redis知识](ProjectDocs/development/redis.md)
 * 大数据开发手册
   *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
+* Python开发手册
+  *  [Python语法](ProjectDocs/python/mac.md)
+
+
+
