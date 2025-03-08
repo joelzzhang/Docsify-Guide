@@ -1,6 +1,8 @@
-# Kerberos高可用集群搭建
+## 原理介绍
 
-## 1 环境规划
+## 高可用集群搭建
+
+### 1.环境规划
 
 | IP         | hostname | 角色           | 组件                                   |
 | ---------- | -------- | -------------- | -------------------------------------- |
@@ -8,16 +10,16 @@
 | 10.10.10.4 | hadoop2  | Slaver，Client | krb5-server krb5-workstation krb5-libs |
 | 10.10.10.5 | hadoop3  | Client         | krb5-workstation krb5-libs             |
 
-## 2 准备工作
+### 2.准备工作
 
-### 2.1 修改hostname
+#### 2.1 修改hostname
 
 ```bash
 [root@hadoop3 ~]# vim /etc/hostname 
 hadoop1
 ```
 
-### 2.2 修改hosts
+#### 2.2 修改hosts
 
 ```bash
 [root@hadoop3 ~]# vim /etc/hosts
@@ -26,7 +28,7 @@ hadoop1
 10.10.10.5 hadoop3
 ```
 
-### 2.3 ssh免密登录
+#### 2.3 ssh免密登录
 
 ```bash
 # 在本机生成非对称密钥
@@ -64,7 +66,7 @@ The key's randomart image is:
 root@hadoop2's password:
 ```
 
-### 2.4 安装ntp服务
+#### 2.4 安装ntp服务
 
 - 搭建Kerberos集群的时候需要各机器的时间保持一致，因此需要安装时间同步器
 
@@ -148,7 +150,7 @@ root@hadoop2's password:
   [root@hadoop3 ~]# ntpdate -u 192.168.31.100
   ```
 
-#### 2.4.1 ntp知识拓展
+##### 2.4.1 ntp知识拓展
 
 ntp常用命令：
 
@@ -156,37 +158,37 @@ ntp常用命令：
 
    常用选项：
 
-    - `-q`：静默模式，不输出任何信息。
-    - `-u`：更新所有已配置的服务器。
-    - `-s`：指定服务器的IP地址或主机名。
-    - `-b`：指定要使用的回显端口。
+   - `-q`：静默模式，不输出任何信息。
+   - `-u`：更新所有已配置的服务器。
+   - `-s`：指定服务器的IP地址或主机名。
+   - `-b`：指定要使用的回显端口。
 
 2. `ntpq`：查询NTP服务器的状态和统计信息。语法：`ntpq [选项]`
 
    常用选项：
 
-    - `-c peers`：显示与所有对等体（peer）的连接状态。
-    - `-p`：显示当前选定的对等体的详细信息。
-    - `-n`：以数字形式显示时间戳。
-    - `-t`：显示所有跟踪日志文件的内容。
+   - `-c peers`：显示与所有对等体（peer）的连接状态。
+   - `-p`：显示当前选定的对等体的详细信息。
+   - `-n`：以数字形式显示时间戳。
+   - `-t`：显示所有跟踪日志文件的内容。
 
 3. `timedatectl`：查询和设置系统时间和时区。语法：`timedatectl [选项] [动作]`
 
    常用选项：
 
-    - `--no-ask-password`：在需要输入密码的情况下自动回答“yes”。
-    - `--list-timezones`：列出所有可用的时区。
-    - `--set-timezone`：设置系统的时区。
-    - `--show-timezone`：显示当前系统的时区。
+   - `--no-ask-password`：在需要输入密码的情况下自动回答“yes”。
+   - `--list-timezones`：列出所有可用的时区。
+   - `--set-timezone`：设置系统的时区。
+   - `--show-timezone`：显示当前系统的时区。
 
 4. `chronyd`：管理Chrony守护进程，用于替代NTP服务。语法：`chronyd [选项] [动作]`
 
    常用选项：
 
-    - `-q`：静默模式，不输出任何信息。
-    - `-c`：启动Chrony守护进程。
-    - `-h`：显示帮助信息。
-    - `-V`：显示版本信息。
+   - `-q`：静默模式，不输出任何信息。
+   - `-c`：启动Chrony守护进程。
+   - `-h`：显示帮助信息。
+   - `-V`：显示版本信息。
 
 `ntpq -p`的输出说明了当前计算机与ntp server间的信息，具体说明如下：
 
@@ -207,7 +209,7 @@ ntp常用命令：
 >
 > ```bash
 > [root@hadoop3 ~]# ntpq -p
->      remote           refid      st t when poll reach   delay   offset  jitter
+>   remote           refid      st t when poll reach   delay   offset  jitter
 > ==============================================================================
 > +120.25.115.20   10.137.53.7      2 u  946 1024  135   29.754   -5.681   2.907
 > *203.107.6.88    100.107.25.114   2 u  493 1024  347   40.292   -2.793   3.989
@@ -216,9 +218,9 @@ ntp常用命令：
 > 此外，ntp服务还有其他有用的信息，例如通过运行ntpstat命令查看ntp服务器是否处于活动状态以及最近的一次同步结果。
 
 
-## 3 安装Kerberos
+### 3.安装Kerberos
 
-### 3.1 安装Kerberos主节点
+#### 3.1 安装Kerberos主节点
 
 - hadoop1节点为主节点，需安装服务端和客户端
 
@@ -238,7 +240,7 @@ ntp常用命令：
   [root@hadoop3 ~]# yum -y install krb5-workstation krb5-libs
   ```
 
-### 3.2 配置Kerberos服务相关文件
+#### 3.2 配置Kerberos服务相关文件
 
 - 修改`krb5.conf`
 
@@ -312,7 +314,7 @@ ntp常用命令：
 
   > 该配置文件主要是用于管理员登陆的acl配置格式，上述的配置表示以`/admin@HADOOP.COM`结尾的用户拥有`*`(`all` 也就是所有)权限，具体配置可根据项目来是否缩小权限。
 
-### 3.3 创建Kerberos数据库
+#### 3.3 创建Kerberos数据库
 
 - 初始化数据库
 
@@ -327,9 +329,10 @@ ntp常用命令：
   -rw-------. 1 root root     0 11月  8 15:13 principal.ok
   ```
 
-  >  -r 指定域名(也就是在krb5.conf文件[realms]组里面定义的域名)
+  >  -r 指定域名(也就是在krb5.conf文件[realms]组里面定义的域名) 
   >
   >  -s 选项指定将数据库的主节点密钥存储在文件中，从而可以在每次启动KDC时自动重新生成主节点密钥
+
 - 创建好数据库后重启kdc，并设置开机启动
 
   ```bash
@@ -350,7 +353,7 @@ ntp常用命令：
   ```
 
 
-### 3.4 创建 kerberos的管理员
+#### 3.4 创建 kerberos的管理员
 
 ```bash
 [root@hadoop3 ~]# kadmin.local 
@@ -358,7 +361,7 @@ Authenticating as principal admin/admin@HADOOP.COM with password.
 kadmin.local:  addprinc admin/admin@HADOOP.COM
 ```
 
-### 3.5 生成kerberos管理员密钥文件
+#### 3.5 生成kerberos管理员密钥文件
 
 ```bash
 [root@hadoop3 ~]# kadmin.local 
@@ -370,7 +373,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
 >
 > -norandkey 表示生成keytab文件时不更新密码，还是用原来的密码
 
-### 3.6 安装Kerberos从节点
+#### 3.6 安装Kerberos从节点
 
 1. 安装Kerberos服务端和客户端
 
@@ -531,7 +534,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
       ```
 
 
-### 3.7 kerberos常用命令
+#### 3.7 kerberos常用命令
 
 - **添加主体(principal)**
 
@@ -639,7 +642,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
   Keytab name: FILE:hdfs.keytab
   ```
 
-### 3.8 主体票据有效期修改
+#### 3.8 主体票据有效期修改
 
 - 修改client端的`/etc/krb5.conf`
 
@@ -663,7 +666,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
   modprinc -maxlife 1d -maxrenewlife 180d +allow_renewable flink/emrint02@CQ.CTC.COM
   ```
 
-- 手动刷新设置`renewable_lifetime`
+- 手动刷新设置`renewable_lifetime` 
 
   ```shell
   kinit -r 80days
