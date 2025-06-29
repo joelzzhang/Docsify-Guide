@@ -16,6 +16,7 @@
   *  [Mysql部署运维](ProjectDocs/operations/mysql.md)
   *  [Redis部署运维](ProjectDocs/operations/redis.md)
   *  [网络IO原理](ProjectDocs/operations/socket-io.md)
+  *  [Keepalived部署运维](ProjectDocs/operations/keepalived.md)
 * 前端开发手册
   * [Nodejs使用手册](ProjectDocs/frontend/node.md)
 * JAVA开发手册
