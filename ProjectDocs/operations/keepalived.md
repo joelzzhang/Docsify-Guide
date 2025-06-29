@@ -1,5 +1,3 @@
-## Keealived
-
 ### 离线安装
 
 **安装keepalived的依赖库**
