@@ -400,12 +400,12 @@ ps -ef | grep -v grep | grep keepalived | awk '{print $2}' | xargs kill -9
    原因是：curl命令请求时，每次请求都从不同的端口发请求，所以每次lvs都当做一个新的客户端来处理，并且curl请求完之后就关闭了tcp连接；而浏览器则每次刷新tcp连接会保持，会以同一个端口发出请求，所以lvs就会认为是同一个客户端，每次刷新就会指向同一RealServer。如果要想浏览器测试也能达到轮询效果，则需要将lvs的连接处于空闲状态的超时时间设置的很短。
 
 ```bash
-   #查看ipvsadm默认超时时间
+#查看ipvsadm默认超时时间
 ipvsadm -L --timeout
-   Timeout (tcp tcpfin udp): 900 120 300
+Timeout (tcp tcpfin udp): 900 120 300
    
-   #900 120 300这三个数值分别是TCP TCPFIN UDP的时间，也就是说一条tcp的连接经过lvs后，lvs会把这台记录保存15分钟，就是因为这个时间过长，所以很多人都会发现做好LVS DR之后轮询现象并没有发生，实践中将此数值调整很小小，使用以下命令调整：
-   ipvsadm --set 1 1 1
+#900 120 300这三个数值分别是TCP TCPFIN UDP的时间，也就是说一条tcp的连接经过lvs后，lvs会把这台记录保存15分钟，就是因为这个时间过长，所以很多人都会发现做好LVS DR之后轮询现象并没有发生，实践中将此数值调整很小小，使用以下命令调整：
+ipvsadm --set 1 1 1
 ```
 
 
