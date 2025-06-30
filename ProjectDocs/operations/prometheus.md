@@ -646,7 +646,7 @@ prometheus_tsdb_compaction_chunk_range_count 780
 1. 在线获取
 
    ```bash
-   wget https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.8.2.linux-amd64.tar.gz
+   wget https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
    ```
 
 2. 解压安装包
