@@ -862,7 +862,9 @@ JMX Exporter 利用 Java 的 JMX 机制来读取 JVM 运行时的一些监控数
 **JMX Exporter 的两种用法**
 
 1、启动独立进程。JVM 启动时指定参数，暴露 JMX 的 RMI 接口，JMX Exporter 调用 RMI 获取 JVM 运行时状态数据，转换为 Prometheus metrics 格式，并暴露端口让 Prometheus 采集。
+
 2、VM 进程内启动（in-process）。JVM 启动时指定参数，通过 JAVA Agent 的形式运行 JMX Exporter 的 jar 包，进程内读取 JVM 运行时状态数据，转换为 Prometheus metrics 格式，并暴露端口让 Prometheus 采集。
+
 **官方不推荐使用第一种方式，一方面配置复杂，另一方面因为它需要一个单独的进程，而这个进程本身的监控又成了新的问题。**
 
 1. 在线获取
