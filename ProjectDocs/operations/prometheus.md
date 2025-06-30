@@ -641,6 +641,117 @@ prometheus_tsdb_compaction_chunk_range_count 780
 
 ## Exporter采集组件
 
+### node_exporter
+
+1. 在线获取
+
+   ```bash
+   wget https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.8.2.linux-amd64.tar.gz
+   ```
+
+2. 解压安装包
+
+   ```bash
+   tar -zxvf node_exporter-1.8.2.linux-amd64.tar.gz -C /opt
+   ```
+
+3. 创建符号链接
+
+   ```bash
+   ln -s /opt/node_exporter-1.8.2.linux-amd64 /usr/local/node_exporter
+   ```
+
+4. 给`prometheus`账号授权
+
+   ```bash
+   chown -R prometheus:prometheus /usr/local/node_exporter
+   ```
+
+5. 创建`node_exporter.service`服务文件
+
+   - 编辑`node_exporter.service`文件
+
+     ```bash
+     vim /usr/lib/systemd/system/node_exporter.service
+     ```
+
+   - 添加以下内容
+
+     ```bash
+     [Unit]
+     Description=node_exporter
+     Documentation=https://prometheus.io/
+     Requires=network.target remote-fs.target
+     After=network.target remote-fs.target
+     
+     [Service]
+     Type=simple
+     User=prometheus
+     Group=prometheus
+     ExecReload=/bin/kill -HUP $MAINPID
+     KillMode=process
+     Restart=on-failure
+     RestartSec=30s
+     ExecStart=/bin/bash -c \
+               "exec /usr/local/node_exporter/node_exporter \
+               --web.listen-address=:9100 \
+               --collector.systemd \
+               --collector.textfile.directory=/var/prometheus/node-exporter \
+               --collector.diskstats.device-exclude='[swap|boot|none]' \
+               >> /var/log/prometheus/node-exporter.log 2>&1"
+     
+     [Install]
+     WantedBy=multi-user.target
+     ```
+
+6. 设置`node_exporter`开机启动
+
+   ```bash
+   systemctl enable node_exporter
+   ```
+
+7. 创建日志目录
+
+   ```bash
+   mkdir -p /var/log/prometheus
+   chown -R prometheus:prometheus /var/log/prometheus
+   ```
+
+8. 创建自定义收集数据的目录
+
+   ```bash
+   mkdir -p /var/prometheus/node-exporter
+   chown -R prometheus:prometheus /var/prometheus/node-exporter
+   
+   #自定义收集指标demo
+   vim directory-size.sh 
+   #!/bin/bash
+   # # Expose directory usage metrics, passed as an argument. 
+   # # Usage: add this to crontab: 
+   # # */5 * * * * prometheus directory-size.sh /var/lib | tee /var/prometheus/node-exporter/directory_size.prom 
+   # # sed pattern taken from https://www.robustperception.io/monitoring-directory-sizes-with-the-textfile-collector/ 
+   # # Author: Antoine Beaupré 
+   echo "# HELP node_directory_size_bytes Disk space used by some directories"
+   echo "# TYPE node_directory_size_bytes gauge" 
+   du --block-size=1 --summarize "$@" | sed -ne 's/\\/\\\\/;s/"/\\"/g;s/^\([0-9]\+\)\t\(.*\)$/node_directory_size_bytes{directory="\2"} \1/p'
+   ```
+
+9. 启动`node_exporter`
+
+   ```bash
+   systemctl start node_exporter
+   systemctl status node_exporter
+   ```
+
+10. 验证
+
+    ```bash
+    #通过curl访问node_exporter
+    [root@test03 ~]# curl http://ip:9100/metrics
+    ```
+
+### process_exporter
+
 ## PromQL查询语言
 
 ## 告警通知配置
