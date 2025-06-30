@@ -752,6 +752,110 @@ prometheus_tsdb_compaction_chunk_range_count 780
 
 ### process_exporter
 
+1. 在线获取
+
+   ```bash
+   wget https://github.com/ncabatoff/process-exporter/releases/download/v0.8.5/process-exporter-0.8.5.linux-amd64.tar.gz
+   ```
+
+2. 解压安装包
+
+   ```bash
+   tar -zxvf process-exporter-0.8.5.linux-amd64.tar.gz -C /opt
+   ```
+
+3. 创建符号链接
+
+   ```bash
+   ln -s /opt/process-exporter-0.8.5.linux-amd64 /usr/local/process_exporter
+   ```
+
+4. 给`prometheus`账号授权
+
+   ```bash
+   chown -R prometheus:prometheus /usr/local/process_exporter
+   ```
+
+5. 创建`process_exporter.service`服务文件
+
+   - 编辑`process_exporter.service`文件
+
+     ```bash
+     vim /usr/lib/systemd/system/process_exporter.service
+     ```
+
+   - 添加以下内容
+
+     ```bash
+     [Unit]
+     Description=node_exporter
+     Documentation=https://prometheus.io/
+     Requires=network.target remote-fs.target
+     After=network.target remote-fs.target
+     
+     [Service]
+     Type=simple
+     User=prometheus
+     Group=prometheus
+     ExecReload=/bin/kill -HUP $MAINPID
+     KillMode=process
+     Restart=on-failure
+     RestartSec=30s
+     ExecStart=/bin/bash -c \
+               "exec /usr/local/process_exporter/process-exporter \
+               -recheck=true \
+               -web.listen-address=:9101 \
+               -config.path=/usr/local/process_exporter/conf/all_process.yml \
+               >> /var/log/prometheus/process-exporter.log 2>&1"
+     
+     [Install]
+     WantedBy=multi-user.target
+     ```
+   
+6. 设置`process_exporter`开机启动
+
+   ```bash
+   systemctl enable process_exporter
+   ```
+
+7. 创建日志目录
+
+   ```bash
+   mkdir -p /var/log/prometheus
+   chown -R prometheus:prometheus /var/log/prometheus
+   ```
+
+8. `all_process.yml`配置文件
+
+   ```bash
+   process_names:
+     - name: prometheus-exporter
+       labels:
+         mozi_cluster: "monitor"
+         mozi_instance_group: "exporter"
+       cmdline:
+       - .*exporter.*
+   process_names:
+     - name: "{{.Comm}}"
+       cmdline:
+       - '.+'
+   ```
+   
+9. 启动`process_exporter`
+
+   ```bash
+   systemctl start process_exporter
+   systemctl status process_exporter
+   ```
+
+10. 验证
+
+    ```bash
+    #通过curl访问process_exporter
+    [root@test03 ~]# curl http://ip:9101/metrics
+    ```
+
+
 ## PromQL查询语言
 
 ## 告警通知配置
