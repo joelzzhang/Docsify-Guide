@@ -855,6 +855,62 @@ prometheus_tsdb_compaction_chunk_range_count 780
     [root@test03 ~]# curl http://ip:9101/metrics
     ```
 
+### jmx_exporter
+
+JMX Exporter 利用 Java 的 JMX 机制来读取 JVM 运行时的一些监控数据，以代理的形式收集目标应用的 JMX 指标，这样做的好处在于无需对目标应用做任何的改动。然后将其转换为 Prometheus 所认知的 metrics 格式，以便让 Prometheus 对其进行监控采集。
+
+**JMX Exporter 的两种用法**
+1、启动独立进程。JVM 启动时指定参数，暴露 JMX 的 RMI 接口，JMX Exporter 调用 RMI 获取 JVM 运行时状态数据，转换为 Prometheus metrics 格式，并暴露端口让 Prometheus 采集。
+2、VM 进程内启动（in-process）。JVM 启动时指定参数，通过 JAVA Agent 的形式运行 JMX Exporter 的 jar 包，进程内读取 JVM 运行时状态数据，转换为 Prometheus metrics 格式，并暴露端口让 Prometheus 采集。
+**官方不推荐使用第一种方式，一方面配置复杂，另一方面因为它需要一个单独的进程，而这个进程本身的监控又成了新的问题。**
+
+1. 在线获取
+
+   ```bash
+   wget https://github.com/prometheus/jmx_exporter/releases/download/1.3.0/jmx_prometheus_javaagent-1.3.0.jar
+   ```
+
+8. `config.yaml`配置文件
+
+   ```bash
+   ---
+   lowercaseOutputName: true
+   lowercaseOutputLabelNames: true
+   rules:
+     - pattern: "java.lang<type=Memory> HeapMemoryUsage"
+       name: jvm_heap_memory_usage_bytes
+       help: JVM heap memory usage in bytes
+       type: GAUGE
+     - pattern: "java.lang<type=Memory> NonHeapMemoryUsage"
+       name: jvm_non_heap_memory_usage_bytes
+       help: JVM non-heap memory usage in bytes
+       type: GAUGE
+     - pattern: ".*"
+   ```
+   
+3. 启动`jmx_exporter`
+
+   ```bash
+   java -javaagent:jmx_prometheus_javaagent-<VERSION>.jar=[HOSTNAME:]<PORT>:<EXPORTER.YAML> -jar <YOUR_APPLICATION.JAR>
+   ```
+
+   - `<PORT>` is required
+
+   - `[HOSTNAME]` is optional. if provided, must be separated from `<PORT>` using a colon (`:`) (e.g., `server:12345`)
+
+   - Example
+
+     ```bash
+     java -javaagent:jmx_prometheus_javaagent-1.3.0.jar=12345:config.yaml -jar <YOUR_APPLICATION.JAR>
+     ```
+
+10. 验证
+
+    ```bash
+    #通过curl访问jmx_exporter
+    [root@test03 ~]# curl http://ip:12345
+    ```
+
 
 ## PromQL查询语言
 
