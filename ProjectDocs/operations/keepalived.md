@@ -1,3 +1,12 @@
+### 基本工作原理
+
+![基本工作原理](../images/operations/keepalived+lvs.png)
+
+1. 当用户向负载均衡调度器（Director Server）发起请求，调度器将请求发往至内核空间
+2. PREROUTING链首先会接收到用户请求，判断目标IP确定是本机IP，将数据包发往INPUT链
+3. IPVS是工作在INPUT链上的，当用户请求到达INPUT时，IPVS会将用户请求和自己已定义好的集群服务进行比对，如果用户请求的就是定义的集群服务，那么此时IPVS会强行修改数据包里的目标IP地址及端口，并将新的数据包发往POSTROUTING链
+4. POSTROUTING链接收数据包后发现目标IP地址刚好是自己的后端服务器，那么此时通过选路，将数据包最终发送给后端的服务器
+
 ### 离线安装
 
 **安装keepalived的依赖库**
@@ -56,6 +65,19 @@ configure options: --prefix=/usr/local/keepalived-2.3.4
 Config options:  LVS VRRP VRRP_AUTH VRRP_VMAC OLD_CHKSUM_COMPAT IPROUTE_ETC_DIR=/etc/iproute2 IPROUTE_USR_DIR=/etc/iproute2 INIT=systemd
 
 System options:  VSYSLOG MEMFD_CREATE CLOSE_RANGE IPV6_FREEBIND IPV6_MULTICAST_ALL IPV4_DEVCONF LIBNL3 RTA_ENCAP RTA_EXPIRES RTA_NEWDST RTA_PREF FRA_SUPPRESS_PREFIXLEN FRA_SUPPRESS_IFGROUP FRA_TUN_ID RTAX_CC_ALGO RTAX_QUICKACK RTEXT_FILTER_SKIP_STATS FRA_L3MDEV FRA_UID_RANGE RTAX_FASTOPEN_NO_COOKIE RTA_VIA FRA_PROTOCOL FRA_IP_PROTO FRA_SPORT_RANGE FRA_DPORT_RANGE RTA_TTL_PROPAGATE IFA_FLAGS F_OFD_SETLK LWTUNNEL_ENCAP_MPLS LWTUNNEL_ENCAP_ILA NET_LINUX_IF_H_COLLISION LIBIPTC_LINUX_NET_IF_H_COLLISION LIBIPVS_NETLINK IPVS_DEST_ATTR_ADDR_FAMILY IPVS_SYNCD_ATTRIBUTES IPVS_64BIT_STATS IPVS_TUN_TYPE IPVS_TUN_CSUM IPVS_TUN_GRE VRRP_IPVLAN IFLA_LINK_NETNSID GLOB_BRACE GLOB_ALTDIRFUNC INET6_ADDR_GEN_MODE VRF SO_MARK
+```
+
+### 安装Nginx
+
+```bash
+yum -y install build-essential libpcre3 libpcre3-dev zlib1g-dev openssl libssl-dev
+wget https://nginx.org/download/nginx-1.28.0.tar.gz
+tar zxvf nginx-1.28.0.tar.gz
+cd nginx-1.28.0
+sudo ./configure --prefix=/usr/local/nginx --with-stream --with-http_ssl_module --with-http_gzip_static_module --with-http_stub_status_module
+make && make install
+# 启动nginx
+nginx
 ```
 
 ### 配置keepalived

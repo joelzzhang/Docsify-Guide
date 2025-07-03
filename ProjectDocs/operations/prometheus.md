@@ -652,7 +652,7 @@ prometheus_tsdb_compaction_chunk_range_count 780
 2. 解压安装包
 
    ```bash
-   tar -zxvf node_exporter-1.8.2.linux-amd64.tar.gz -C /opt
+   tar -zxvf node_exporter-1.8.2.linux-amd64.tar.gz -C /opt/
    ```
 
 3. 创建符号链接
@@ -761,7 +761,7 @@ prometheus_tsdb_compaction_chunk_range_count 780
 2. 解压安装包
 
    ```bash
-   tar -zxvf process-exporter-0.8.5.linux-amd64.tar.gz -C /opt
+   tar -zxvf process-exporter-0.8.5.linux-amd64.tar.gz -C /opt/
    ```
 
 3. 创建符号链接
