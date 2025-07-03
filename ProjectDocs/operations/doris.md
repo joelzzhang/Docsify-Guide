@@ -429,7 +429,7 @@ sudo systemctl enable_ntpd.service
 
 ### FE高可用部署
 
-用户通过 FE 的查询端口（`query_port`，默认 9030）使用 MySQL 协议连接 Doris。当部署多个 FE 节点时，用户可以在多个 FE 之上部署负载均衡层来实现 Doris 查询的高可用。本案例采用keepalive+lvs的方案来实现Doris FE的高可用，参考Keepalived安装部署
+用户通过 FE 的查询端口（`query_port`，默认 9030）使用 MySQL 协议连接 Doris。当部署多个 FE 节点时，用户可以在多个 FE 之上部署负载均衡层来实现 Doris 查询的高可用。本案例采用keepalive+lvs的方案来实现Doris FE的高可用，[参考Keepalived安装部署](./keepalived.md)
 
 ### 集群升级扩容
 
