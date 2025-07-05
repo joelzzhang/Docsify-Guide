@@ -25,7 +25,7 @@ JAVA_HOME=/usr/local/java/jdk1.8.0_441
 #windows环境变量
 CLASSPATH=.;%JAVA_HOME%/lib;%JAVA_HOME%/lib/tools.jar
 #Linux环境变量
-CLASSPATH=.;$JAVA_HOME/lib;$JAVA_HOME/lib/tools.jar
+CLASSPATH=.:$JAVA_HOME/lib:$JAVA_HOME/lib/tools.jar
 PATH=$PATH:$JAVA_HOME/bin:$JAVA_HOME/jre/bin
 export PATH JAVA_HOME CLASSPATH
 ```
