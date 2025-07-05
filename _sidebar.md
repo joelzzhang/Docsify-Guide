@@ -26,9 +26,9 @@
   *  [Redis知识](ProjectDocs/development/redis.md)
 * 大数据开发手册
   *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
-  *  [Kerberos集群部署](ProjectDocs/operations/kerberos.md)
-  *  [HADOOP高可用集群部署](ProjectDocs/operations/hadoop.md)
-  *  [Doris高可用集群部署](ProjectDocs/operations/doris.md)
+  *  [Kerberos集群部署](ProjectDocs/bigdata/kerberos.md)
+  *  [HADOOP高可用集群部署](ProjectDocs/bigdata/hadoop.md)
+  *  [Doris高可用集群部署](ProjectDocs/bigdata/doris.md)
 
 
 
