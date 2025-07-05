@@ -4,13 +4,10 @@
 * MacOS手册
   *  [MacOS使用指南](ProjectDocs/mac/mac.md)
 * 运维手册
-  *  [Kerberos集群部署](ProjectDocs/operations/kerberos.md)
   *  [Linux时钟同步](ProjectDocs/operations/time-sync.md)
   *  [Linux磁盘管理](ProjectDocs/operations/linux-disk.md)
-  *  [HADOOP高可用集群部署](ProjectDocs/operations/hadoop.md)
   *  [Prometheus部署](ProjectDocs/operations/prometheus.md)
   *  [Grafana使用手册](ProjectDocs/operations/grafana.md)
-  *  [Doris高可用集群部署](ProjectDocs/operations/doris.md)
   *  [Ansible自动化运维](ProjectDocs/operations/ansible.md)
   *  [Docker运维](ProjectDocs/operations/docker.md)
   *  [Mysql部署运维](ProjectDocs/operations/mysql.md)
@@ -29,6 +26,9 @@
   *  [Redis知识](ProjectDocs/development/redis.md)
 * 大数据开发手册
   *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
+  *  [Kerberos集群部署](ProjectDocs/operations/kerberos.md)
+  *  [HADOOP高可用集群部署](ProjectDocs/operations/hadoop.md)
+  *  [Doris高可用集群部署](ProjectDocs/operations/doris.md)
 
 
 
