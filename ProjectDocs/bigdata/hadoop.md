@@ -6,11 +6,12 @@
 
 ## 2 环境规划
 
-| IP         | hostname | 角色                                                         | 组件                  |
-| ---------- | -------- | ------------------------------------------------------------ | --------------------- |
-| 10.10.10.3 | hadoop1  | NameNode、JournalNode、DataNode 、Zookeeper、ResourceManager、NodeManager、ZKFC | HDFS、YARN、Zookeeper |
-| 10.10.10.4 | hadoop2  | JournalNode、DataNode  、Zookeeper、ResourceManager、NodeManager、HistoryServer、ZKFC | HDFS、YARN、Zookeeper |
-| 10.10.10.5 | hadoop3  | NameNode、JournalNode、DataNode  、Zookeeper、NodeManager、ZKFC | HDFS、YARN、Zookeeper |
+| IP             | hostname  | 角色                                                         | 组件                                                         |
+| -------------- | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 192.168.31.100 | bigdata01 | Zookeeper、JournalNode、NameNode、ResourceManager、ZKFC      | HDFS、YARN、Zookeeper                                        |
+| 192.168.31.101 | bigdata02 | Zookeeper、JournalNode、NameNode、ResourceManager、ZKFC、HistoryServer | HDFS、YARN、Zookeeper                                        |
+| 192.168.31.102 | bigdata03 | Zookeeper、JournalNode、DataNode  、NodeManager、ZKFC、KDC   | HDFS、YARN、Zookeeper、krb5-server、krb5-workstation、krb5-libs |
+| 192.168.31.103 | bigdata04 | DataNode 、NodeManager、KDC                                  | HDFS、YARN、krb5-server、krb5-workstation、krb5-libs         |
 
 ## 3 HDFS配置高可用集群
 

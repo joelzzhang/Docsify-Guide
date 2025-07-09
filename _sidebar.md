@@ -25,8 +25,8 @@
   *  [Mysql数据库](ProjectDocs/development/mysql.md)
   *  [Redis知识](ProjectDocs/development/redis.md)
 * 大数据开发手册
-  *  [MacOS使用指南](ProjectDocs/bigdata/mac.md)
   *  [Kerberos集群部署](ProjectDocs/bigdata/kerberos.md)
+  *  [Zookeeper集群部署](ProjectDocs/bigdata/zookeeper.md)
   *  [HADOOP高可用集群部署](ProjectDocs/bigdata/hadoop.md)
   *  [Doris高可用集群部署](ProjectDocs/bigdata/doris.md)
 
