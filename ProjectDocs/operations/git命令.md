@@ -141,11 +141,11 @@ git的操作往往都不是一个命令能解决的，就比如下图所示，�
 
 - 代码提交和同步代码
 
-![git代码比较和同步代码](https://img.beierblog.com/20220717blog/git-four-areas.png)
+![git代码比较和同步代码](../images/operations/git-four-areas.png)
 
 - 代码撤销和撤销同步
 
-![git代码撤销和撤销同步](https://img.beierblog.com/20220717blog/git-five-states_7a70f7856af64ecfa3d4054518da5eb2.png)
+![git代码撤销和撤销同步](../images/operations/git-five-states.png)
 
 ## 1、代码提交和同步代码
 
