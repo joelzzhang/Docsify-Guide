@@ -75,7 +75,12 @@
    - 创建myid并写入值
 
      ```bash
+     # bigdata01
      echo 1 >> /data/zookeeper/data/myid
+     # bigdata02
+     echo 2 >> /data/zookeeper/data/myid
+     # bigdata03
+     echo 3 >> /data/zookeeper/data/myid
      ```
 
    - 分发安装包
