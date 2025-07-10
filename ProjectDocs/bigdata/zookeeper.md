@@ -6,8 +6,7 @@
   wget https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz
   ```
 
-- 离线获取
-  访问[zookeeper官方网站](https://zookeeper.apache.org/releases.html)下载
+- 离线获取访问[zookeeper官方网站](https://zookeeper.apache.org/releases.html)下载
 
 ## 分布式部署
 
