@@ -56,9 +56,7 @@
      server.3=bigdata03:2888:3888
      ```
 
-     **集群配置参数解读**
-
-     > [!NOTE|style:flat]
+     > [!NOTE|style:flat|label:集群配置参数解读]
      >
      > Server.X=HOST:PORT1:PORT2
      >
