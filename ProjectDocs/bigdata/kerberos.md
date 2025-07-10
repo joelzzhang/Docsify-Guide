@@ -399,7 +399,7 @@ root@hadoop2's password:
   -rw-------. 1 root root     0 11月  8 15:13 principal.ok
   ```
 
-  >  [!TIP]
+  >  [!TIP|style:flat]
   >
   >  -r 指定域名(也就是在krb5.conf文件[realms]组里面定义的域名) 
   >
