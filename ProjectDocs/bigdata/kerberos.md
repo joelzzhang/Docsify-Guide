@@ -2,9 +2,9 @@
 
 `Kerberos`是为`TCP/IP`网络系统设计的可信的第三方认证协议，用于**身份认证**。网络上的`Keberos`服务基于`DES`对称加密算法，但也可以用其他算法替代。因此，`Keberos`是一个在许多系统中获得广泛应用的认证协议。Keberos最初是美国麻省理工学院（`MIT`）为Athena项目开发的。
 
-> [!TIP|style:flat|label:My own heading]
+> [!TIP|style:flat|label:官网]
 >
-> 官网：https://www.kerberos.org/
+> https://www.kerberos.org/
 
 ### 1. 应用场景
 
