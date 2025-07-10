@@ -400,10 +400,10 @@ root@hadoop2's password:
   ```
 
   > [!TIP|style:flat]
-  
-  >  -r 指定域名(也就是在krb5.conf文件[realms]组里面定义的域名) 
   >
-  >  -s 选项指定将数据库的主节点密钥存储在文件中，从而可以在每次启动KDC时自动重新生成主节点密钥，生成 stash file，并在其中存储 master server key（krb5kdc）
+  > -r 指定域名(也就是在krb5.conf文件[realms]组里面定义的域名) 
+  >
+  > -s 选项指定将数据库的主节点密钥存储在文件中，从而可以在每次启动KDC时自动重新生成主节点密钥，生成 stash file，并在其中存储 master server key（krb5kdc）
 
 - 创建好数据库后重启kdc，并设置开机启动
 
