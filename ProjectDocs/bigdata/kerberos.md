@@ -441,6 +441,8 @@ Authenticating as principal admin/admin@HADOOP.COM with password.
 kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admin/admin@HADOOP.COM
 ```
 
+> [!TIP]
+>
 > -k 指定keytab文件的位置
 >
 > -norandkey 表示生成keytab文件时不更新密码，还是用原来的密码
