@@ -148,7 +148,7 @@ EOF
 sysctl -p
 ```
 
-#### 2.4. <span id="禁用CPU省电模式">禁用CPU省电模式</span>
+#### 2.4. <span id="禁用cpu省电模式">禁用CPU省电模式</span>
 
 在部署 Doris 时检修关闭 CPU 的省电模式，以确保 Doris 在高负载时提供稳定的高性能，避免由于 CPU 频率降低导致的性能波动、响应延迟和系统瓶颈，提高 Doris 的可靠性和吞吐量。如果您的 CPU 不支持 Scaling Governor，可以跳过此项配置。
 
@@ -205,7 +205,7 @@ vi /etc/security/limits.conf
 * hard nofile 1000000
 ```
 
-#### 2.8. <span id="安装并配置NTP服务">安装并配置NTP服务</span>
+#### 2.8. <span id="安装并配置ntp服务">安装并配置NTP服务</span>
 
 Doris 的元数据要求时间精度要小于 5000ms，所以所有集群所有机器要进行时钟同步，避免因为时钟问题引发的元数据不一致导致服务出现异常。
 
