@@ -1,10 +1,8 @@
-# Hadoop HA 高可用搭建
-
-## 1 环境准备
+## 一. 环境准备
 
 
 
-## 2 环境规划
+## 二. 环境规划
 
 | IP             | hostname  | 角色                                                         | 组件                                                         |
 | -------------- | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -13,15 +11,15 @@
 | 192.168.31.102 | bigdata03 | Zookeeper、JournalNode、DataNode  、NodeManager、ZKFC、KDC   | HDFS、YARN、Zookeeper、krb5-server、krb5-workstation、krb5-libs |
 | 192.168.31.103 | bigdata04 | DataNode 、NodeManager、KDC                                  | HDFS、YARN、krb5-server、krb5-workstation、krb5-libs         |
 
-## 3 HDFS配置高可用集群
+## 三. HDFS配置高可用集群
 
-### 3.1 配置hadoop-env.sh
+### 1. 配置hadoop-env.sh
 
 ```shell
 export JAVA_HOME=/opt/jdk1.8.0_381
 ```
 
-### 3.2 配置core-site.xml
+### 2. 配置core-site.xml
 
 ```xml
 <configuration>
@@ -53,7 +51,7 @@ export JAVA_HOME=/opt/jdk1.8.0_381
 </configuration>
 ```
 
-### 3.3 配置hdfs-site.xml
+### 3. 配置hdfs-site.xml
 
 ```xml
 <configuration>
@@ -144,9 +142,9 @@ export JAVA_HOME=/opt/jdk1.8.0_381
 </configuration>
 ```
 
-## 4 YARN配置高可用集群
+## 四. YARN配置高可用集群
 
-### 4.1 配置yarn-site.xml
+### 1. 配置yarn-site.xml
 
 ```xml
 <configuration>
@@ -238,12 +236,5 @@ export JAVA_HOME=/opt/jdk1.8.0_381
             JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
     </property>
 </configuration>
-```
-
-## 5 分发Hadoop包
-
-```shell
-[root@hadoop1@10.10.10.3 module]# scp -r hadoop-3.3.6 root@hadoop2:/opt/module/
-[root@hadoop1@10.10.10.3 module]# scp -r hadoop-3.3.6 root@hadoop3:/opt/module/
 ```
 

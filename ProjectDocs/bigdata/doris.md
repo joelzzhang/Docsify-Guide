@@ -1,10 +1,8 @@
-# Doris
+## 一. 部署前准备
 
-## 部署前准备
+### 1. 集群规划
 
-### 集群规划
-
-#### Doris集群端口规划
+#### 1.1 Doris集群端口规划
 
 | 实例名称 | 端口名称               | 默认端口 | 通信方向                       | 说明                                                   |
 | -------- | ---------------------- | -------- | ------------------------------ | ------------------------------------------------------ |
@@ -18,7 +16,7 @@
 | FE       | edit_log_port          | 9010     | FE <–> FE                      | FE 上的 bdbje 之间通信用的端口                         |
 | Broker   | broker_ipc_port        | 8000     | FE –> Broker，<br/>BE –>Broker | Broker 上的 thrift server，用于接收请求                |
 
-#### 节点规划
+#### 1.2. 节点规划
 
 | Host       | IP           | Role       |
 | ---------- | ------------ | ---------- |
@@ -27,7 +25,7 @@
 | be-test-02 | 192.168.0.33 | BE、Broker |
 | be-test-03 | 192.168.0.34 | BE、Broker |
 
-#### Java环境安装
+#### 1.3. Java环境安装
 
 ```shell
 tar -zxvf /home/weihu/jdk-8u431-linux-aarch64.tar.gz && mv jdk1.8.0_431/ /usr/share/
@@ -42,7 +40,7 @@ source /etc/profile
 java -version
 ```
 
-#### 数据盘格式化挂载
+#### 1.4. 数据盘格式化挂载
 
 ```shell
 # 1、创建数据目录
@@ -79,20 +77,20 @@ UUID=85c959b1-aa81-4ac4-a331-f1337cfaed01 /data12 xfs defaults 0 0
 UUID=85c959b1-aa81-4ac4-a331-f1337cfaed01 /dfs2 xfs defaults,noatime,nodiratime,inode64 0 0
 ```
 
-### 操作系统检查
+### 2. 操作系统检查
 
 在部署 Doris 时，需要对以下操作系统项进行检查：
 
-- [确保关闭 swap 分区](#关闭swap分区)
-- [确保系统关闭透明大页](#关闭系统透明大页)
-- [确保系统有足够大的虚拟内存区域](#增加虚拟内存区域)
-- [确保 CPU 不使用省电模式](#禁用CPU省电模式)
-- [确保网络连接溢出时自动重置新连接](#网络连接溢出时自动重置新连接)
-- [确保 Doris 相关端口畅通或关闭系统防火墙](#相关端口畅通)
-- [确保系统有足够大的打开文件句柄数](#增加系统的最大文件句柄数)
-- [确定部署集群机器安装 NTP 服务](#安装并配置NTP服务)
+- [确保关闭 swap 分区](#2.1. 关闭swap分区)
+- [确保系统关闭透明大页](#2.2. 关闭系统透明大页)
+- [确保系统有足够大的虚拟内存区域](#2.3. 增加虚拟内存区域)
+- [确保 CPU 不使用省电模式](#2.4. 禁用CPU省电模式)
+- [确保网络连接溢出时自动重置新连接](#2.5. 网络连接溢出时自动重置新连接)
+- [确保 Doris 相关端口畅通或关闭系统防火墙](#2.6. 相关端口畅通)
+- [确保系统有足够大的打开文件句柄数](#2.7. 增加系统的最大文件句柄数)
+- [确定部署集群机器安装 NTP 服务](#2.8. 安装并配置NTP服务)
 
-#### 关闭swap分区
+#### 2.1. 关闭swap分区
 
 在部署 Doris 时，建议关闭 swap 分区。swap 分区是内核发现内存紧张时，会按照自己的策略将部分内存数据移动到配置的 swap 分区，由于内核策略不能充分了解应用的行为，会对 Doris 性能造成较大影响。所以建议关闭。
 
@@ -113,7 +111,7 @@ tmpfs                  /tmp          tmpfs     nodev,nosuid          0      0
 /dev/sda3              /home         ext4      defaults,noatime      0      2
 ```
 
-#### 关闭系统透明大页
+#### 2.2. 关闭系统透明大页
 
 在高负载低延迟的场景中，建议关闭操作系统透明大页（Transparent Huge Pages, THP），避免其带来的性能波动和内存碎片问题，确保 Doris 能够稳定高效地使用内存。
 
@@ -134,7 +132,7 @@ EOF
 chmod +x /etc/rc.d/rc.local
 ```
 
-#### 增加虚拟内存区域
+#### 2.3. 增加虚拟内存区域
 
 为了保证 Doris 有足够的内存映射区域来处理大量数据，需要修改 VMA（虚拟内存区域）。如果没有足够的内存映射区域，Doris 在启动或运行时可能会遇到 `Too many open files` 或类似的错误。
 
@@ -150,7 +148,7 @@ EOF
 sysctl -p
 ```
 
-#### 禁用CPU省电模式
+#### 2.4. 禁用CPU省电模式
 
 在部署 Doris 时检修关闭 CPU 的省电模式，以确保 Doris 在高负载时提供稳定的高性能，避免由于 CPU 频率降低导致的性能波动、响应延迟和系统瓶颈，提高 Doris 的可靠性和吞吐量。如果您的 CPU 不支持 Scaling Governor，可以跳过此项配置。
 
@@ -160,7 +158,7 @@ sysctl -p
 echo 'performance' | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 ```
 
-#### 网络连接溢出时自动重置新连接
+#### 2.5. 网络连接溢出时自动重置新连接
 
 在部署 Doris 时，需要确保在 TCP 连接的发送缓冲区溢出时，连接会被立即中断，以防止 Doris 在高负载或高并发情况下出现缓冲区阻塞，避免连接被长时间挂起，从而提高系统的响应性和稳定性。
 
@@ -176,7 +174,7 @@ EOF
 sysctl -p
 ```
 
-#### 相关端口畅通
+#### 2.6. 相关端口畅通
 
 如果发现端口不通，可以试着关闭防火墙，确认是否是本机防火墙造成。如果是防火墙造成，可以根据配置的 Doris 各组件端口打开相应的端口通信。
 
@@ -195,7 +193,7 @@ sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 shutdown -r now
 ```
 
-#### 增加系统的最大文件句柄数
+#### 2.7. 增加系统的最大文件句柄数
 
 Doris 由于依赖大量文件来管理表数据，所以需要将系统对程序打开文件数的限制调高。
 
@@ -207,7 +205,7 @@ vi /etc/security/limits.conf
 * hard nofile 1000000
 ```
 
-#### 安装并配置NTP服务
+#### 2.8. 安装并配置NTP服务
 
 Doris 的元数据要求时间精度要小于 5000ms，所以所有集群所有机器要进行时钟同步，避免因为时钟问题引发的元数据不一致导致服务出现异常。
 
@@ -218,7 +216,7 @@ sudo systemctl start_ntpd.service
 sudo systemctl enable_ntpd.service
 ```
 
-## 开始部署
+## 二. 开始部署
 
 存算一体集群架构如下，部署存算一体集群分为四步：
 
@@ -229,7 +227,7 @@ sudo systemctl enable_ntpd.service
 3. **部署 BE 节点**：向 FE 集群中注册 BE 节点；
 4. **验证集群正确性**：部署完成后连接并验证集群正确性。
 
-### Doris部署步骤
+### 1. Doris部署步骤
 
 #### 第 1 步：部署 FE Master 节点
 
@@ -427,68 +425,112 @@ sudo systemctl enable_ntpd.service
    - Alive 为 true 表示节点存活
    - TabletNum 表示该节点上的分片数量，新加入的节点会进行数据均衡，TabletNum 逐渐趋于平均。
 
-### FE高可用部署
+### 2. FE高可用部署
 
 用户通过 FE 的查询端口（`query_port`，默认 9030）使用 MySQL 协议连接 Doris。当部署多个 FE 节点时，用户可以在多个 FE 之上部署负载均衡层来实现 Doris 查询的高可用。本案例采用keepalive+lvs的方案来实现Doris FE的高可用，[参考Keepalived安装部署](/ProjectDocs/operations/keepalived.md?id=基本工作原理)
 
-### 集群升级扩容
+### 3. 集群升级扩容
 
-### 集群优化
+### 4. 集群优化
 
-#### fe.conf
+- **fe.conf**
 
-<table>
-<tr>
-    <th>参数</th>
-    <th>值</th>
-    <th>说明</th>
-</tr>
-<tr>
-    <td>max_running_txn_num_per_db</td>
-    <td>10000</td>
-    <td>高并发导入运行事务数较多，需调高参数。</td>
-</tr>
-<tr>
-    <td>streaming_label_keep_max_second</td>
-    <td>300</td>
-    <td rowspan="3">由于业务一直在进行高并发的 Stream Load 数据导入操作，而导入过程中 FE 会记录相关的 Load 信息，每次导入产生的内存信息约为 200K。这些内存信息的清理时间由streaming_label_keep_max_second参数控制，默认值为 12 小时，将它调小到 5 分钟后 FE 内存不会耗尽，但是运行一段时间后，发现内存按照 1 小时为周期进行抖动，高峰内存使用率达到 80%。分析代码发现清理 label 的线程每隔label_clean_interval_second运行一次，默认为 1 小时，把它也调小到 5 分钟后，FE 内存很平稳。label_keep_max_second后将删除已完成或取消的加载作业的标签</td>
-</tr>
-<tr>
-    <td>label_keep_max_second</td>
-    <td>7200</td>    
-</tr>
-<tr>
-    <td>label_clean_interval_second</td>
-    <td>300</td>    
-</tr>
-<tr>
-    <td>enable_round_robin_create_tablet</td>
-    <td>true</td>
-    <td>创建 Tablet 时，采用 Round Robin 策略，尽量均匀。</td>
-</tr>
-<tr>
-    <td>tablet_rebalancer_type</td>
-    <td>partition</td>
-    <td>均衡 Tablet 时，采用每个分区内尽量均匀的策略。</td>
-</tr>
-<tr>
-    <td>autobucket_min_buckets</td>
-    <td>10</td>
-    <td>将自动分桶的最小分桶数从 1 调大到 10，避免日志量增加时分桶不够。</td>
-</tr>
-<tr>
-    <td>max_backend_heartbeat_failure_tolerance_count</td>
-    <td>10</td>
-    <td>日志场景下 BE 服务器压力较大，可能短时间心跳超时，因此将容忍次数从 1 调大到 10。</td>
-</tr>
-</table>
+  <table>
+  <tr>
+      <th>参数</th>
+      <th>值</th>
+      <th>说明</th>
+  </tr>
+  <tr>
+      <td>max_running_txn_num_per_db</td>
+      <td>10000</td>
+      <td>高并发导入运行事务数较多，需调高参数。</td>
+  </tr>
+  <tr>
+      <td>streaming_label_keep_max_second</td>
+      <td>300</td>
+      <td rowspan="3">由于业务一直在进行高并发的 Stream Load 数据导入操作，而导入过程中 FE 会记录相关的 Load 信息，每次导入产生的内存信息约为 200K。这些内存信息的清理时间由streaming_label_keep_max_second参数控制，默认值为 12 小时，将它调小到 5 分钟后 FE 内存不会耗尽，但是运行一段时间后，发现内存按照 1 小时为周期进行抖动，高峰内存使用率达到 80%。分析代码发现清理 label 的线程每隔label_clean_interval_second运行一次，默认为 1 小时，把它也调小到 5 分钟后，FE 内存很平稳。label_keep_max_second后将删除已完成或取消的加载作业的标签</td>
+  </tr>
+  <tr>
+      <td>label_keep_max_second</td>
+      <td>7200</td>    
+  </tr>
+  <tr>
+      <td>label_clean_interval_second</td>
+      <td>300</td>    
+  </tr>
+  <tr>
+      <td>enable_round_robin_create_tablet</td>
+      <td>true</td>
+      <td>创建 Tablet 时，采用 Round Robin 策略，尽量均匀。</td>
+  </tr>
+  <tr>
+      <td>tablet_rebalancer_type</td>
+      <td>partition</td>
+      <td>均衡 Tablet 时，采用每个分区内尽量均匀的策略。</td>
+  </tr>
+  <tr>
+      <td>autobucket_min_buckets</td>
+      <td>10</td>
+      <td>将自动分桶的最小分桶数从 1 调大到 10，避免日志量增加时分桶不够。</td>
+  </tr>
+  <tr>
+      <td>max_backend_heartbeat_failure_tolerance_count</td>
+      <td>10</td>
+      <td>日志场景下 BE 服务器压力较大，可能短时间心跳超时，因此将容忍次数从 1 调大到 10。</td>
+  </tr>
+  </table>
 
-#### be.conf
+- **be.conf**
+
+  <table>
+  <tr>
+      <th>参数</th>
+      <th>值</th>
+      <th>说明</th>
+  </tr>
+  <tr>
+      <td>max_running_txn_num_per_db</td>
+      <td>10000</td>
+      <td>高并发导入运行事务数较多，需调高参数。</td>
+  </tr>
+  <tr>
+      <td>streaming_label_keep_max_second</td>
+      <td>300</td>
+      <td rowspan="3">由于业务一直在进行高并发的 Stream Load 数据导入操作，而导入过程中 FE 会记录相关的 Load 信息，每次导入产生的内存信息约为 200K。这些内存信息的清理时间由streaming_label_keep_max_second参数控制，默认值为 12 小时，将它调小到 5 分钟后 FE 内存不会耗尽，但是运行一段时间后，发现内存按照 1 小时为周期进行抖动，高峰内存使用率达到 80%。分析代码发现清理 label 的线程每隔label_clean_interval_second运行一次，默认为 1 小时，把它也调小到 5 分钟后，FE 内存很平稳。label_keep_max_second后将删除已完成或取消的加载作业的标签</td>
+  </tr>
+  <tr>
+      <td>label_keep_max_second</td>
+      <td>7200</td>    
+  </tr>
+  <tr>
+      <td>label_clean_interval_second</td>
+      <td>300</td>    
+  </tr>
+  <tr>
+      <td>enable_round_robin_create_tablet</td>
+      <td>true</td>
+      <td>创建 Tablet 时，采用 Round Robin 策略，尽量均匀。</td>
+  </tr>
+  <tr>
+      <td>tablet_rebalancer_type</td>
+      <td>partition</td>
+      <td>均衡 Tablet 时，采用每个分区内尽量均匀的策略。</td>
+  </tr>
+  <tr>
+      <td>autobucket_min_buckets</td>
+      <td>10</td>
+      <td>将自动分桶的最小分桶数从 1 调大到 10，避免日志量增加时分桶不够。</td>
+  </tr>
+  <tr>
+      <td>max_backend_heartbeat_failure_tolerance_count</td>
+      <td>10</td>
+      <td>日志场景下 BE 服务器压力较大，可能短时间心跳超时，因此将容忍次数从 1 调大到 10。</td>
+  </tr>
+  </table>
+
+## 三. SQL手册
 
 
 
-## SQL手册
-
-
-
-## 问题记录
+## 四. 问题记录

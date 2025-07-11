@@ -1,6 +1,4 @@
-## Centos 7部署docker
-
-### 一、准备工作
+## 一. 准备工作
 
 1. yum包更新到最新
 
@@ -55,9 +53,9 @@
    systemctl disable firewalld
    ```
 
-### 二、Docker 部署
+## 二. Docker 部署
 
-#### 离线部署
+### 离线部署
 
 1. 安装包获取
 
@@ -133,7 +131,7 @@
 
    ![docker](../images/operations/docker1.png)  
 
-#### yum部署
+### yum部署
 
 1. 查看可用版本
 
@@ -183,7 +181,7 @@
    sudo rm -rf /var/lib/containerd
    ```
 
-#### 加速镜像设置
+### 加速镜像设置
 
 1. 编辑`/etc/docker/daemon.json`文件
 
@@ -207,9 +205,9 @@
    }
    ```
 
-### 三、Docker使用
+## 三. Docker使用
 
-#### docker启动与停止
+### docker启动与停止
 
 - 启动docker
 
@@ -253,7 +251,7 @@
   docker --help
   ```
 
-#### docker常用命令
+### docker常用命令
 
 1. 镜像相关命令
 
@@ -551,7 +549,7 @@
 
 
 
-### 三、Dockerfile
+## 四. Dockerfile
 
 > Dockerfile是由一系列命令和参数构成的脚本，这些命令应用于基础镜像并最终创建一个新的镜像。
 
@@ -571,7 +569,7 @@
 | ENTRYPOINT command(eg. ["docker-entrypoint.sh"])             | 和CMD的使用类似，和CMD的不同的是docker run执行时，CMD会覆盖之前的命令，而ENTRYPOINT不会<br />**格式1：`ENTRYPOINT <command>` (shell格式)<br/>格式2：`ENTRYPOINT ["executable", "param1", "param2"]` (exec格式，推荐格式)** |
 | EXPOSE port(eg. 3306)                                        | 指定镜像要暴露的端口，启动镜像时，可以使用-p将该端口映射给宿主机 |
 
-#### 用法
+### 用法
 
 命令：`docker build`
 
@@ -583,14 +581,14 @@ docker build -t image_name:tag .
 docker build -t image_name:tag -f /PATH/TO/Dockerfile
 ```
 
-#### 踩坑记录
+### 踩坑记录
 
 - Dockerfile中RUN pwd无效时，在 `docker build` 命令前面增加 `DOCKER_BUILDKIT=0`
 
 
-### 四、Docker实战
+## 五. Docker实战
 
-#### mysql的部署
+### mysql的部署
 
 1. 拉取mysql镜像
 
@@ -634,7 +632,7 @@ docker build -t image_name:tag -f /PATH/TO/Dockerfile
 
 
 
-#### tomcat的部署
+### tomcat的部署
 
 1. 拉取tomcat镜像
 
@@ -652,7 +650,7 @@ docker build -t image_name:tag -f /PATH/TO/Dockerfile
 
 
 
-#### nginx的部署
+### nginx的部署
 
 1. 拉取nginx镜像
 
@@ -670,7 +668,7 @@ docker build -t image_name:tag -f /PATH/TO/Dockerfile
 
 
 
-#### redis的部署
+### redis的部署
 
 1. 拉取redis镜像
 
@@ -686,7 +684,7 @@ docker build -t image_name:tag -f /PATH/TO/Dockerfile
    
    `redis.conf`要将`bind`改成 `0.0.0.0`，不然访问不了
 
-#### consul的部署
+### consul的部署
 
 ```shell
 docker pull consul
@@ -695,7 +693,7 @@ docker run -di --name=consul -p 8500:8500 --restart=always consul:latest agent -
 
 https://learn.hashicorp.com/tutorials/consul/docker-container-agents?in=consul/docker
 
-#### kafka的部署
+### kafka的部署
 
 ```yaml
 version: "2"
@@ -743,13 +741,13 @@ docker-compose -f filename.yml up -d
 
 
 
-#### openresty的部署
+### openresty的部署
 
 ```shell
 ./configure --prefix=/usr/local/openresty --with-luajit --without-http_redis2_module --with-http_iconv_module --with-http_sub_module --with-openssl=../openssl-3.0.4
 ```
 
-#### openssl的部署
+### openssl的部署
 
 ```
 wget -nc --no-check-certificate https://www.openssl.org/source/openssl-3.0.2.tar.gz -P /usr/local/src
@@ -771,13 +769,13 @@ openssl version
 
 
 
-#### MinIo的部署
+### MinIo的部署
 
 ```shell
 docker run -di --name=minio -p 9000:9000 -p 9999:9999 -v /data/minio:/data -v /etc/minio/config:/root/.minio -e MINIO_ROOT_USER=admin -e MINIO_ROOT_PASSWORD=Admin123456 minio/minio server /data --console-address ":9999"
 ```
 
-#### skywalking部署
+### skywalking部署
 
 `instances.yml`
 
@@ -1043,7 +1041,7 @@ curl -X POST --cacert /usr/share/elasticsearch/config/certificates/ca/ca.crt -u 
 
 
 
-#### Pulsar部署
+### Pulsar部署
 
 ```yaml
 version: '3.5'
@@ -1095,7 +1093,7 @@ networks:
     driver: bridge    
 ```
 
-#### Postgresql部署
+### Postgresql部署
 
 ```yaml
 version: '2'
@@ -1118,7 +1116,7 @@ volumes:
     driver: local
 ```
 
-#### mariaDB部署
+### mariaDB部署
 
 ```shell
 docker run -di --name mariadb -p 23306:3306 -v /my/own/datadir:/var/lib/mysql -v /my/custom:/etc/mysql/conf.d -e MARIADB_ROOT_PASSWORD='password' mariadb:10.10

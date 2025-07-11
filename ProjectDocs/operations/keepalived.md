@@ -1,4 +1,4 @@
-### 基本工作原理
+## 一. 基本工作原理
 
 ![基本工作原理](../images/operations/keepalived+lvs.png)
 
@@ -7,7 +7,7 @@
 3. IPVS是工作在INPUT链上的，当用户请求到达INPUT时，IPVS会将用户请求和自己已定义好的集群服务进行比对，如果用户请求的就是定义的集群服务，那么此时IPVS会强行修改数据包里的目标IP地址及端口，并将新的数据包发往POSTROUTING链
 4. POSTROUTING链接收数据包后发现目标IP地址刚好是自己的后端服务器，那么此时通过选路，将数据包最终发送给后端的服务器
 
-### 离线安装
+## 二. 离线安装
 
 **安装keepalived的依赖库**
 
@@ -67,7 +67,7 @@ Config options:  LVS VRRP VRRP_AUTH VRRP_VMAC OLD_CHKSUM_COMPAT IPROUTE_ETC_DIR=
 System options:  VSYSLOG MEMFD_CREATE CLOSE_RANGE IPV6_FREEBIND IPV6_MULTICAST_ALL IPV4_DEVCONF LIBNL3 RTA_ENCAP RTA_EXPIRES RTA_NEWDST RTA_PREF FRA_SUPPRESS_PREFIXLEN FRA_SUPPRESS_IFGROUP FRA_TUN_ID RTAX_CC_ALGO RTAX_QUICKACK RTEXT_FILTER_SKIP_STATS FRA_L3MDEV FRA_UID_RANGE RTAX_FASTOPEN_NO_COOKIE RTA_VIA FRA_PROTOCOL FRA_IP_PROTO FRA_SPORT_RANGE FRA_DPORT_RANGE RTA_TTL_PROPAGATE IFA_FLAGS F_OFD_SETLK LWTUNNEL_ENCAP_MPLS LWTUNNEL_ENCAP_ILA NET_LINUX_IF_H_COLLISION LIBIPTC_LINUX_NET_IF_H_COLLISION LIBIPVS_NETLINK IPVS_DEST_ATTR_ADDR_FAMILY IPVS_SYNCD_ATTRIBUTES IPVS_64BIT_STATS IPVS_TUN_TYPE IPVS_TUN_CSUM IPVS_TUN_GRE VRRP_IPVLAN IFLA_LINK_NETNSID GLOB_BRACE GLOB_ALTDIRFUNC INET6_ADDR_GEN_MODE VRF SO_MARK
 ```
 
-### 安装Nginx
+## 三. 安装Nginx
 
 ```bash
 yum -y install build-essential libpcre3 libpcre3-dev zlib1g-dev openssl libssl-dev
@@ -80,9 +80,9 @@ make && make install
 nginx
 ```
 
-### 配置keepalived
+## 四. 配置keepalived
 
-**keepalived+nginx高可用配置**
+### 1. keepalived+nginx高可用配置
 
 ```ini
 ! Configuration File for keepalived
@@ -196,7 +196,7 @@ vrrp_instance VI_1 {
 }
 ```
 
-**nginx进程检查脚本**
+### 2. nginx进程检查脚本
 
 ```bash
 touch /etc/keepalived/check_nginx.sh
@@ -228,7 +228,7 @@ exit 0  # 检查成功
 chmod +x /etc/keepalived/check_nginx.sh
 ```
 
-**keealived+lvs高可用配置**
+### 3. keealived+lvs高可用配置
 
 ```ini
 # VIP和端口
@@ -336,7 +336,7 @@ virtual_server 192.168.31.201 80 {
 }
 ```
 
-**给真实服务器lo:0绑定VIP地址、ARP广播**
+### 4. 给真实服务器lo:0绑定VIP地址、ARP广播
 
 ```bash
 #!/bin/bash
@@ -383,7 +383,7 @@ arp_announce的作用是系统在对外发送arp请求时，用于控制如何�
 arp_ignore和arp_announce参数分别有all,lo,eth1,…等对应不同网卡的具体参数。当all和具体网卡的参数值不一致时，取较大值生效。
 ```
 
-**启动keepalived**
+### 5. 启动keepalived
 
 ```bash
 systemctl reload keepalived
@@ -394,7 +394,7 @@ ps -ef | grep -v grep | grep nginx | awk '{print $2}' | xargs kill -9
 ps -ef | grep -v grep | grep keepalived | awk '{print $2}' | xargs kill -9
 ```
 
-**参数总结表**
+### 6. 参数总结表
 
 | 参数类别   | 核心参数            | 说明                               |
 | ---------- | ------------------- | ---------------------------------- |
@@ -414,20 +414,19 @@ ps -ef | grep -v grep | grep keepalived | awk '{print $2}' | xargs kill -9
 | 健康检查   | SSL_GET/TCP_CHECK   | HTTP/TCP 检查方式                  |
 |            | script_check        | 自定义脚本检查                     |
 
-**问题总结**
+## 五. 问题总结
 
 1. 为什么LVS设置了轮询，浏览器测试还是不能轮询，使用curl测试负载均衡时，能够正常的轮询调度到不同的后端主机。
+
    原因是：curl命令请求时，每次请求都从不同的端口发请求，所以每次lvs都当做一个新的客户端来处理，并且curl请求完之后就关闭了tcp连接；而浏览器则每次刷新tcp连接会保持，会以同一个端口发出请求，所以lvs就会认为是同一个客户端，每次刷新就会指向同一RealServer。如果要想浏览器测试也能达到轮询效果，则需要将lvs的连接处于空闲状态的超时时间设置的很短。
 
-```bash
-#查看ipvsadm默认超时时间
-ipvsadm -L --timeout
-Timeout (tcp tcpfin udp): 900 120 300
-   
-#900 120 300这三个数值分别是TCP TCPFIN UDP的时间，也就是说一条tcp的连接经过lvs后，lvs会把这台记录保存15分钟，就是因为这个时间过长，所以很多人都会发现做好LVS DR之后轮询现象并没有发生，实践中将此数值调整很小小，使用以下命令调整：
-ipvsadm --set 1 1 1
-```
+   ```bash
+   #查看ipvsadm默认超时时间
+   ipvsadm -L --timeout
+   Timeout (tcp tcpfin udp): 900 120 300
+      
+   #900 120 300这三个数值分别是TCP TCPFIN UDP的时间，也就是说一条tcp的连接经过lvs后，lvs会把这台记录保存15分钟，就是因为这个时间过长，所以很多人都会发现做好LVS DR之后轮询现象并没有发生，实践中将此数值调整很小小，使用以下命令调整：
+   ipvsadm --set 1 1 1
+   ```
 
-
-
-  
+2. 待发现
