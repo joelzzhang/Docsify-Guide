@@ -8,7 +8,11 @@ current_dir=$(dirname "$0")
 cd "${current_dir}/.." || exit 1
 
 # 配置日志文件路径
-LOG_FILE="/var/log/Docsify-Guide/git-pull-$(date +%Y-%m-%d).log"
+LOG_DIR="/var/log/Docsify-Guide"
+if [ ! -d "$LOG_DIR" ];then
+  mkdir -p "$LOG_DIR"
+fi
+LOG_FILE="$LOG_DIR/git-pull-$(date +%Y-%m-%d).log"
 
 # 获取当前时间戳并写入日志
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
@@ -29,11 +33,11 @@ git_pull_pid=$!
 wait "$git_pull_pid"
 
 last_month_dash=$(date -d "last month" +%Y-%m)
-logfiles=$(find /var/log/Docsify-Guide -name "git-pull-$last_month_dash*.log" | sort)
+logfiles=$(find "$LOG_DIR" -name "git-pull-$last_month_dash*.log" | sort)
 if [ -n "$logfiles" ]; then
   #echo "=============$TIMESTAMP=============" >> "$LOG_FILE"
   echo "$logfiles" >> "$LOG_FILE"
-  find /var/log/Docsify-Guide -name "git-pull-$last_month_dash*.log" -exec rm -f {} \;
+  find "$LOG_DIR" -name "git-pull-$last_month_dash*.log" -exec rm -f {} \;
 fi
 
 # 输出结束提示（可选）
