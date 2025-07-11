@@ -30,6 +30,7 @@
   *  [Zookeeper集群部署](ProjectDocs/bigdata/zookeeper.md)
   *  [HADOOP高可用集群部署](ProjectDocs/bigdata/hadoop.md)
   *  [Doris高可用集群部署](ProjectDocs/bigdata/doris.md)
+  *  [Ranger集群部署](ProjectDocs/bigdata/ranger.md)
 
 
 
