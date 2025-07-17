@@ -156,6 +156,7 @@ keytool -list -keystore acton.keystore -storepass 123456
 - 您的密钥库包含 1 个条目
 
   > acton, 2023-11-27, PrivateKeyEntry,
+  >
   > 证书指纹 (SHA1): 03:CD:A0:1C:1F:E2:50:04:1B:C8:D4:9F:35:97:0D:20:D6:E3:21:90
 
 示例：查看指定别名
@@ -165,6 +166,7 @@ keytool -list -keystore acton.keystore -storepass 123456 -alias acton
 ```
 
 > acton, 2023-11-27, PrivateKeyEntry,
+>
 > 证书指纹 (SHA1): 03:CD:A0:1C:1F:E2:50:04:1B:C8:D4:9F:35:97:0D:20:D6:E3:21:90
 
 
@@ -175,9 +177,13 @@ keytool -list -keystore acton.keystore -storepass 123456 -alias acton -rfc
 ```
 
 > 别名: acton
+>
 > 创建日期: 2023-11-27
+>
 > 条目类型: PrivateKeyEntry
+>
 > 证书链长度: 1
+>
 > 证书[1]:
 > -----BEGIN CERTIFICATE-----
 > MIIDTzCCAjegAwIBAgIEOLT4rDANBgkqhkiG9w0BAQUFADBXMQswCQYDVQQGEwJD
@@ -322,15 +328,22 @@ keytool -printcert -file acton.cer
 ```
 
 > 所有者: CN=acton, OU=acton, O=acton, L=BJ, ST=BJ, C=CN
+>
 > 发布者: CN=acton, OU=acton, O=acton, L=BJ, ST=BJ, C=CN
+>
 > 序列号: 28ab6921
+>
 > 有效期为 Mon Nov 27 17:22:38 CST 2023 至 Sun Jun 21 17:22:38 CST 2122
+>
 > 证书指纹:
 > 	 MD5:  20:DC:B9:57:65:B1:77:FE:07:33:D6:7B:BE:E5:4A:AC
 > 	 SHA1: 00:1A:D4:2A:A9:F0:56:D7:33:41:4D:05:BA:8A:6B:7E:E4:E7:7D:12
 > 	 SHA256: 38:0F:24:D3:FA:E4:49:D6:D2:B8:E7:84:ED:4A:86:D2:93:4E:9E:5D:56:EA:6F:9F:C3:E9:85:3A:14:F9:E2:AE
+>
 > 签名算法名称: SHA1withRSA
+>
 > 主体公共密钥算法: 2048 位 RSA 密钥
+>
 > 版本: 3
 >
 > 扩展:
@@ -415,10 +428,15 @@ keytool -printcertreq -file acton.csr -v
 ```
 
 > PKCS #10 证书请求 (版本 1.0)
+>
 > 主体: CN=acton, OU=acton, O=acton, L=BJ, ST=BJ, C=CN
+>
 > 格式: X.509
+>
 > 公共密钥: 2048 位 RSA 密钥
+>
 > 签名算法: SHA256withRSA
+>
 > 扩展请求:
 > #1: ObjectId: 2.5.29.14 Criticality=false
 > SubjectKeyIdentifier [
@@ -492,15 +510,22 @@ keytool -importcert -trustcacerts -alias acton_sign -file acton_sign.cer -keysto
 ```
 
 > 所有者: CN=acton, OU=acton, O=acton, L=BJ, ST=BJ, C=CN
+>
 > 发布者: CN=acton, OU=acton, O=acton, L=BJ, ST=BJ, C=CN
+>
 > 序列号: 342dcb68
+>
 > 有效期为 Mon Nov 27 19:51:00 CST 2023 至 Sun Feb 25 19:51:00 CST 2024
+>
 > 证书指纹:
 > 	 MD5:  FF:A5:4B:71:FD:3B:E2:CC:F3:51:CD:FE:08:A9:3B:D4
 > 	 SHA1: 21:2B:9F:12:14:75:0E:A8:EA:CB:C8:C9:F6:88:B7:45:D9:3D:CD:24
 > 	 SHA256: B4:53:E6:DD:B4:6E:3D:2B:28:26:66:8B:4F:60:B0:FB:D2:27:90:7E:EC:7A:C5:FB:1E:06:13:7C:2F:23:7F:18
+>
 > 签名算法名称: SHA256withRSA
+>
 > 主体公共密钥算法: 2048 位 RSA 密钥
+>
 > 版本: 3
 >
 > 扩展:
@@ -514,8 +539,8 @@ keytool -importcert -trustcacerts -alias acton_sign -file acton_sign.cer -keysto
 > ]
 >
 > 是否信任此证书? [否]:  y
+>
 > 证书已添加到密钥库中
-> AI写代码
 
 
 示例：查看密钥库内容
@@ -525,10 +550,14 @@ keytool -list -keystore acton.keystore -storepass 123456
 ```
 
 > 密钥库类型: jks
+>
 > 密钥库提供方: SUN
+>
 > 您的密钥库包含 2 个条目
+>
 > acton_sign, 2023-11-27, trustedCertEntry,
 > 证书指纹 (SHA1): 21:2B:9F:12:14:75:0E:A8:EA:CB:C8:C9:F6:88:B7:45:D9:3D:CD:24
+>
 > acton, 2023-11-27, PrivateKeyEntry,
 > 证书指纹 (SHA1): 86:43:64:83:AC:3A:AE:F1:9D:BB:CE:E5:C1:07:8C:A5:2A:F0:4E:3E
 
