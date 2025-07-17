@@ -267,11 +267,11 @@ root@hadoop2's password:
 
 #### 3.2 配置Kerberos服务相关文件
 
-- 修改`krb5.conf`
+- 修改客户端配置`krb5.conf`
 
   ```bash
   [root@hadoop3 ~]# mkdir -p /var/log/kerberos
-  [root@hadoop3 ~]# vim etc/krb5.conf
+  [root@hadoop3 ~]# vim /etc/krb5.conf
   # Configuration snippets may be placed in this directory as well
   includedir /etc/krb5.conf.d/
   
@@ -286,7 +286,7 @@ root@hadoop2's password:
   
   # 配置默认的设置
   [libdefaults]
-   # DNS查找域名，我们可以理解为DNS的正向解析，默认禁用。
+   # DNS查找域名，可以理解为DNS的正向解析，默认禁用。
    dns_lookup_realm = false
    # 凭证生效的时限，设置为24h。
    ticket_lifetime = 24h
@@ -296,6 +296,8 @@ root@hadoop2's password:
    forwardable = true
   #  rdns = false
    pkinit_anchors = FILE:/etc/pki/tls/certs/ca-bundle.crt
+   # 决定Kerberos是否尝试使用DNS将主机名规范化为完全限定域名（FQDN）,主机名规范化(DNS进行域名正向和IP反向解析)，默认值为true，fallback为折中方案
+   dns_canonicalize_hostname = fallback
   # 默认的realm。如 HADOOP.COM，当客户端在连接或者获取主体的时候，当没有输入领域的时候，该值为默认值(列如：使用kinit admin/admin 获取主体的凭证时，没有输入领域，而传到kdc服务器的时候，会变成 admin/admin@HADOOP.COM )
    default_realm = HADOOP.COM
   #  default_ccache_name = KEYRING:persistent:%{uid}
@@ -307,7 +309,7 @@ root@hadoop2's password:
    kdc = hadoop1
    #添加从节点host
    kdc = hadoop2
-   # admin服务地址 格式[主机名或域名]:端口， 默认端口749，默认端口可不写
+   # admin服务地址 格式[主机名或域名]:端口， 默认端口749，默认端口可不写，Kerberos管理服务（kadmind）的位置
    admin_server = hadoop1
    # 代表默认的域名，设置Server主机所对应的域名
    default_domain = hadoop1.com
@@ -315,8 +317,8 @@ root@hadoop2's password:
   
   # 指定DNS域名和Kerberos域名之间映射关系。指定服务器的FQDN，对应的domain_realm值决定了主机所属的域。
   [domain_realm]
-  .hadoop1.com = HADOOP.COM
-  hadoop1.com = HADOOP.COM
+  .hadoop.com = HADOOP.COM
+  hadoop.com = HADOOP.COM
   
   # kdc的配置信息。即指定kdc.conf的位置。
   [kdc]
@@ -324,7 +326,7 @@ root@hadoop2's password:
    profile = /var/kerberos/krb5kdc/kdc.conf
   ```
 
-- 修改`kdc.conf`
+- 修改服务器端配置`kdc.conf`
 
   ```bash
   [root@hadoop3 ~]# vi /var/kerberos/krb5kdc/kdc.conf
@@ -431,6 +433,8 @@ root@hadoop2's password:
 [root@hadoop3 ~]# kadmin.local 
 Authenticating as principal admin/admin@HADOOP.COM with password.
 kadmin.local:  addprinc admin/admin@HADOOP.COM
+#使用静默模式，执行完后推出命令，非交互式。kadmin.local里面的命令可以通过下面的方式执行
+kadmin.local -p <principal> -q "xst [-norandkey] [-k <keytab>] [<principal>]"
 ```
 
 #### 3.5 生成kerberos管理员密钥文件
