@@ -122,7 +122,6 @@ keytool -importkeystore -srckeystore acton.keystore -destkeystore acton.keystore
 ```
 
 > [!TIP|style:flat|label:keypass 与 storepass的区别]
->
 > 在 Java 中，keypass 和 storepass 是用于保护密钥库（keystore）的两个密码：
 >
 > - **keypass (密钥密码)** ：用于保护密钥库中存储的 **单个密钥** 的密码。它用来加密和解密每个密钥。
@@ -153,9 +152,7 @@ keytool -list -keystore acton.keystore -storepass 123456
 ```
 
 - 密钥库类型: jks
-
 - 密钥库提供方: SUN
-
 - 您的密钥库包含 1 个条目
 
   > acton, 2023-11-27, PrivateKeyEntry,
@@ -422,9 +419,7 @@ keytool -printcertreq -file acton.csr -v
 > 格式: X.509
 > 公共密钥: 2048 位 RSA 密钥
 > 签名算法: SHA256withRSA
->
 > 扩展请求:
->
 > #1: ObjectId: 2.5.29.14 Criticality=false
 > SubjectKeyIdentifier [
 > KeyIdentifier [
@@ -530,11 +525,8 @@ keytool -list -keystore acton.keystore -storepass 123456
 ```
 
 > 密钥库类型: jks
->
 > 密钥库提供方: SUN
->
 > 您的密钥库包含 2 个条目
->
 > acton_sign, 2023-11-27, trustedCertEntry,
 > 证书指纹 (SHA1): 21:2B:9F:12:14:75:0E:A8:EA:CB:C8:C9:F6:88:B7:45:D9:3D:CD:24
 > acton, 2023-11-27, PrivateKeyEntry,
