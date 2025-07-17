@@ -1,7 +1,7 @@
 <!-- _navbar.md -->
 
 * 链接到我
-  * [关于本人](http://119.28.10.135:3000/#) 
+  * [关于本人](https://docs.joelzhang.cn/#) 
   * [腾讯大模型](https://yuanbao.tencent.com/chat/naQivTmsDa) 
   * [AI排行榜](https://www.aipaihangbang.com/) 
 
