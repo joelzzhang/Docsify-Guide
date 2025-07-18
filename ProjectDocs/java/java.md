@@ -213,14 +213,13 @@ java -version
   > 是否信任此证书? [否]:  y
   >
   > 证书已添加到密钥库中
-
-
-  示例：查看密钥库内容
-
+  
+   示例：查看密钥库内容
+  
   ```shell
   keytool -list -keystore acton.keystore -storepass 123456
   ```
-
+  
   > 密钥库类型: jks
   >
   > 密钥库提供方: SUN
@@ -228,8 +227,8 @@ java -version
   > 您的密钥库包含 2 个条目  >
   > 	acton_sign, 2023-11-27, trustedCertEntry,  >
   > 	证书指纹 (SHA1): 21:2B:9F:12:14:75:0E:A8:EA:CB:C8:C9:F6:88:B7:45:D9:3D:CD:24  >
-  >		acton, 2023-11-27, PrivateKeyEntry,  >
-  >		证书指纹 (SHA1): 86:43:64:83:AC:3A:AE:F1:9D:BB:CE:E5:C1:07:8C:A5:2A:F0:4E:3E
+  > 		acton, 2023-11-27, PrivateKeyEntry,  >
+  > 		证书指纹 (SHA1): 86:43:64:83:AC:3A:AE:F1:9D:BB:CE:E5:C1:07:8C:A5:2A:F0:4E:3E
 
 - `-importpass`：导入口令
 
@@ -443,14 +442,13 @@ java -version
   > acton, 2023-11-27, PrivateKeyEntry,
   >
   > 证书指纹 (SHA1): 03:CD:A0:1C:1F:E2:50:04:1B:C8:D4:9F:35:97:0D:20:D6:E3:21:90
-
-
+  
   示例：以RFC样式输出
-
+  
   ```shell
   keytool -list -keystore acton.keystore -storepass 123456 -alias acton -rfc
   ```
-
+  
   > 别名: acton
   >
   > 创建日期: 2023-11-27
