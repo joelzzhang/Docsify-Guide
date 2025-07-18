@@ -44,7 +44,7 @@ java -version
 
 ## Java生成 SSL 证书
 
-> [!TIP|style:flat|iconVisibility:hidden]
+> [!TIP|style:flat]
 >
 > keytool为java原生自带，安装java后不需要再进行安装，作为密钥和证书管理工具，方便用户能够管理自己的公钥/私钥及证书，用于认证服务。
 >
