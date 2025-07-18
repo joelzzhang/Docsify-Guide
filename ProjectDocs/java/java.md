@@ -225,13 +225,11 @@ java -version
   >
   > 密钥库提供方: SUN
   >
-  > 您的密钥库包含 2 个条目
-  >
-  > acton_sign, 2023-11-27, trustedCertEntry,
-  > 证书指纹 (SHA1): 21:2B:9F:12:14:75:0E:A8:EA:CB:C8:C9:F6:88:B7:45:D9:3D:CD:24
-  >
-  > acton, 2023-11-27, PrivateKeyEntry,
-  > 证书指纹 (SHA1): 86:43:64:83:AC:3A:AE:F1:9D:BB:CE:E5:C1:07:8C:A5:2A:F0:4E:3E
+  > 您的密钥库包含 2 个条目  >
+  > 	acton_sign, 2023-11-27, trustedCertEntry,  >
+  > 	证书指纹 (SHA1): 21:2B:9F:12:14:75:0E:A8:EA:CB:C8:C9:F6:88:B7:45:D9:3D:CD:24  >
+  >		acton, 2023-11-27, PrivateKeyEntry,  >
+  >		证书指纹 (SHA1): 86:43:64:83:AC:3A:AE:F1:9D:BB:CE:E5:C1:07:8C:A5:2A:F0:4E:3E
 
 - `-importpass`：导入口令
 
@@ -432,11 +430,9 @@ java -version
   >
   > 密钥库提供方: SUN
   >
-  > 您的密钥库包含 1 个条目
-  >
-  > ​	acton, 2023-11-27, PrivateKeyEntry,
-  >
-  > ​	证书指纹 (SHA1): 03:CD:A0:1C:1F:E2:50:04:1B:C8:D4:9F:35:97:0D:20:D6:E3:21:90
+  > 您的密钥库包含 1 个条目  >
+  >		acton, 2023-11-27, PrivateKeyEntry,  >
+  >		证书指纹 (SHA1): 03:CD:A0:1C:1F:E2:50:04:1B:C8:D4:9F:35:97:0D:20:D6:E3:21:90
 
   示例：查看指定别名
 
