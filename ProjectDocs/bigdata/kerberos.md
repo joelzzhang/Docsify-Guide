@@ -435,6 +435,8 @@ root@hadoop2's password:
   > -r 指定域名(也就是在krb5.conf文件[realms]组里面定义的域名) 
   >
   > -s 选项指定将数据库的主节点密钥存储在文件中，从而可以在每次启动KDC时自动重新生成主节点密钥，生成 stash file，并在其中存储 master server key（krb5kdc）
+  >
+  > -P 指定数据库密码
 
 - 创建好数据库后重启kdc，并设置开机启动
 
@@ -511,6 +513,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab kiprop/hadoop1
    kadmin.local:  addprinc -pw 123456 kiprop/hadoop2
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab kiprop/hadoop2
+   kadmin.local -q "addprinc -pw '1qaz\!QAZ' test04/bigdata03@HADOOP.COM"
    # 凭证和keytab文件生成完成后通过kadmin.local: q退出kadmin命令
    # 复制host.keytab文件到slave节点
    [root@hadoop3 ~]# scp /var/kerberos/krb5kdc/keytab/krb5.keytab hadoop2:/var/kerberos/krb5kdc/keytab/
@@ -561,6 +564,10 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
 
    ```bash
    #备份数据库
+   kdb5_util dump /var/kerberos/krb5kdc/dump/slave_datatrans
+   kprop -f /var/kerberos/krb5kdc/dump/slave_datatrans -s keytab/krb5.keytab  bigdata04
+   #手动触发增量同步
+   kprop -d -s keytab/krb5.keytab  bigdata04
    [root@hadoop3 ~]# kdb5_util dump /var/kerberos/krb5kdc/dump/kdc.dump
    #同步到slave节点
    [root@hadoop1 keytab]# kprop -f /var/kerberos/krb5kdc/dump/kdc.dump -s /var/kerberos/krb5kdc/keytab/krb5.keytab  hadoop2
