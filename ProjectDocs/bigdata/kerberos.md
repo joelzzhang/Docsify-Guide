@@ -387,7 +387,7 @@ root@hadoop2's password:
   kiprop/hadoop1@HADOOP.COM    p
   ```
   
-  > [!TIP|style:flat|label:kadm5.acl文件解析]
+  > [!TIP|style:flat|label:kadm5文件解析]
   >
   > `/var/kerberos/krb5kdc/kadm5.acl`：权限相关配置
   >
