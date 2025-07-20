@@ -484,6 +484,26 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
 
 #### 3.6 安装Kerberos从节点
 
+第一步：安装Kerberos服务端
+
+第二步：将kdc master上的配置文件，数据库文件拷贝到kdc slave
+
+第三步：在kdc master上创建host/${_HOST}、kiprop/_${_HOST}的主体，并生成对应的keytab文件，keytab文件路径/var/kerberos/krb5kdc/keytab/krb5.keytab；再将krb5.keytab文件同步到kdc slave的相同目录下
+
+第四步：创建kpropd.acl，内容为host/${_HOST}
+
+第五步：启动kdc slave节点的kpropd服务
+
+第六步：在kdc master上先dump再同步到slave
+
+第七步：重启kdc master的kadmin、krb5kdc服务
+
+第八步：修改master和slave节点的kdc.conf，将iprop_enable改为true
+
+第九步：重启kadmin和kpropd
+
+第十步： 在kdc master上执行全量同步（手动触发，同步master与slave节点的增量同步标记）kprop -d -s keytab/krb5.keytab  hadoop2
+
 1. 安装Kerberos服务端和客户端
 
    ```bash
@@ -513,7 +533,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab kiprop/hadoop1
    kadmin.local:  addprinc -pw 123456 kiprop/hadoop2
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab kiprop/hadoop2
-   kadmin.local -q "addprinc -pw '1qaz\!QAZ' test04/bigdata03@HADOOP.COM"
+   kadmin.local -q "addprinc -pw '1qaz\!QAZ' test04/hadoop1@HADOOP.COM"
    # 凭证和keytab文件生成完成后通过kadmin.local: q退出kadmin命令
    # 复制host.keytab文件到slave节点
    [root@hadoop3 ~]# scp /var/kerberos/krb5kdc/keytab/krb5.keytab hadoop2:/var/kerberos/krb5kdc/keytab/
@@ -538,14 +558,12 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    [root@hadoop3 ~]# vim /var/kerberos/krb5kdc/kpropd.acl
    host/hadoop1@HADOOP.COM
    host/hadoop2@HADOOP.COM
-   kiprop/hadoop1@HADOOP.COM
-   kiprop/hadoop2@HADOOP.COM
    [root@hadoop3 ~]# vim /var/kerberos/krb5kdc/kadm5.acl
    */admin@HADOOP.COM	*
    kiprop/hadoop1@HADOOP.COM    p
    kiprop/hadoop2@HADOOP.COM    p
    ```
-
+   
 6. 在slave上启动kpropd服务
 
    ```bash
@@ -565,9 +583,9 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    ```bash
    #备份数据库
    kdb5_util dump /var/kerberos/krb5kdc/dump/slave_datatrans
-   kprop -f /var/kerberos/krb5kdc/dump/slave_datatrans -s keytab/krb5.keytab  bigdata04
+   kprop -f /var/kerberos/krb5kdc/dump/slave_datatrans -s keytab/krb5.keytab  hadoop2
    #手动触发增量同步
-   kprop -d -s keytab/krb5.keytab  bigdata04
+   kprop -d -s keytab/krb5.keytab  hadoop2
    [root@hadoop3 ~]# kdb5_util dump /var/kerberos/krb5kdc/dump/kdc.dump
    #同步到slave节点
    [root@hadoop1 keytab]# kprop -f /var/kerberos/krb5kdc/dump/kdc.dump -s /var/kerberos/krb5kdc/keytab/krb5.keytab  hadoop2
