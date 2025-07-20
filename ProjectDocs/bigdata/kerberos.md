@@ -5,6 +5,10 @@
 > [!TIP|style:flat|label:官网]
 >
 > https://www.kerberos.org/
+>
+> https://www.mankier.com/7/kerberos
+>
+> https://k5wiki.kerberos.org/wiki/Projects/Hierarchical_iprop
 
 ### 1. 应用场景
 
@@ -294,8 +298,10 @@ root@hadoop2's password:
    renew_lifetime = 7d
    # 如果此参数被设置为true，则可以转发票据，这意味着如果具有TGT的用户登陆到远程系统，则KDC可以颁发新的TGT，而不需要用户再次进行身份验证。
    forwardable = true
-  #  rdns = false
+   # rdns = false
    pkinit_anchors = FILE:/etc/pki/tls/certs/ca-bundle.crt
+   # 预校验算法，默认edwards25519
+   spake_preauth_groups = edwards25519
    # 决定Kerberos是否尝试使用DNS将主机名规范化为完全限定域名（FQDN）,主机名规范化(DNS进行域名正向和IP反向解析)，默认值为true，fallback为折中方案
    dns_canonicalize_hostname = fallback
   # 默认的realm。如 HADOOP.COM，当客户端在连接或者获取主体的时候，当没有输入领域的时候，该值为默认值(列如：使用kinit admin/admin 获取主体的凭证时，没有输入领域，而传到kdc服务器的时候，会变成 admin/admin@HADOOP.COM )
@@ -353,38 +359,61 @@ root@hadoop2's password:
     max_renewable_life = 7d
     # 指定此KDC支持的各种加密类型。
     supported_enctypes = aes256-cts:normal aes128-cts:normal des3-hmac-sha1:normal arcfour-hmac:normal camellia256-cts:normal camellia128-cts:normal des-hmac-sha1:normal des-cbc-md5:normal des-cbc-crc:normal
+    # kdc主从增量同步参数
+    # 是否启用数据库增量同步
+    iprop_enable = false
+    # 指定要为增量同步保留的最大日志条目数。 默认值为 1000
+    iprop_ulogsize = 2000
+    # 版本 1.19 之前的 iprop_ulogsize 的名称
+    iprop_master_ulogsize = 2000
+    # 增量时间字符串。指定副本 KDC 从主 KDC 轮询新更新的频率。默认值为 2m
+    iprop_replica_poll = 2m
+    # 版本 1.17 之前 iprop_replica_poll 的名称
+    iprop_slave_poll = 2m
+    # 指定要用于增量传播的端口号
+    iprop_port = 760
+    # 指定等待完全传播完成的时间
+    iprop_resync_timeout = 600
+    # /usr/sbin/kproplog -h查看同步日志
    }
   ```
 
 - 修改`kadm5.acl`
 
-  > [!TIP]
-  >
-  > `/var/kerberos/krb5kdc/kadm5.acl`：权限相关配置
-  
-  ```bash
+  ```shell
   [root@hadoop3 ~]# vi /var/kerberos/krb5kdc/kadm5.acl
   */admin@HADOOP.COM	*
+  kiprop/hadoop1@HADOOP.COM    p
+  kiprop/hadoop1@HADOOP.COM    p
   ```
   
-  第一列： `*/admin@HADOOP.COM`  对应  `Kerberos_principal`  表示主体(`principal`)名称
-  
-  第二列：`*` 对应 `permissions`  表示权限
-  
-  > [!TIP]
+  > [!TIP|style:flat|label:`kadm5.acl`文件解析]
+  >
+  > `/var/kerberos/krb5kdc/kadm5.acl`：权限相关配置
+  >
+  > 语法：principal  permissions  [target_principal  [restrictions] ]
+  >
+  > 第一列： `*/admin@HADOOP.COM`  对应  `principal  `  表示主体(`principal`)名称
+  >
+  > 第二列：`*` 对应 `permissions`  表示权限
+  >
+  > 第三列：对应`target_principal`，表示对哪个目标主体的操作，空值表示适用于所有目标主体
   >
   > 该配置文件主要是用于管理员登陆的acl配置格式，上述的配置表示以`/admin@HADOOP.COM`结尾的用户拥有`*`(`all` 也就是所有)权限，具体配置可根据项目来是否缩小权限。
   >
   > 权限如下：
   >
   > - a:[不]允许添加主体或策略。
+  > - c:[不]允许更改主体密码。
   > - d:[不]允许删除主体或策略。
-  > - m:[不]允许修改主体或策略。
-  > - c:[不]允许更改主体的口令。
+  > - e:[不]允许提取主体密钥。
   > - i:[不]允许查询 Kerberos 数据库。
-  >
   > - l:[不]允许列出 Kerberos 数据库中的主体或策略。
+  > - m:[不]允许修改主体或策略。
+  > - p:[不]允许主体数据库的传播(同步)。
+  > - s:[不]允许显式设置主体的密钥。
   > - x或 *:允许所有权限。
+  
 
 #### 3.3 创建Kerberos数据库
 
@@ -392,7 +421,7 @@ root@hadoop2's password:
 
   ```bash
   # 该命令会在 /var/kerberos/krb5kdc/ 目录下创建 principal 数据库
-  [root@hadoop3 ~]# kdb5_util create -s -r HADOOP.COM
+  [root@hadoop3 ~]# kdb5_util create -s -r HADOOP.COM -P 123456
   [root@hadoop3 ~]# ll
   总用量 32
   -rw-------. 1 root root 16384 11月  8 15:13 principal
@@ -432,7 +461,7 @@ root@hadoop2's password:
 ```bash
 [root@hadoop3 ~]# kadmin.local 
 Authenticating as principal admin/admin@HADOOP.COM with password.
-kadmin.local:  addprinc admin/admin@HADOOP.COM
+kadmin.local:  addprinc -pw 123456 admin/admin@HADOOP.COM
 #使用静默模式，执行完后推出命令，非交互式。kadmin.local里面的命令可以通过下面的方式执行
 kadmin.local -p <principal> -q "xst [-norandkey] [-k <keytab>] [<principal>]"
 ```
@@ -475,12 +504,16 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    [root@hadoop3 ~]# kadmin.local 
    Authenticating as principal admin/admin@HADOOP.COM with password.
    kadmin.local:  addprinc host/hadoop1 #生成master节点的host凭证，hadoop1是master的hostname
-   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/host.keytab host/hadoop1
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab host/hadoop1
    kadmin.local:  addprinc host/hadoop2 #生成master节点的host凭证，hadoop2是slave的hostname
-   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/host.keytab host/hadoop2
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab host/hadoop2
+   kadmin.local:  addprinc -pw 123456 kiprop/hadoop1 #用于slave kdc增量同步
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab kiprop/hadoop1
+   kadmin.local:  addprinc -pw 123456 kiprop/hadoop2
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/krb5.keytab kiprop/hadoop2
    # 凭证和keytab文件生成完成后通过kadmin.local: q退出kadmin命令
    # 复制host.keytab文件到slave节点
-   [root@hadoop3 ~]# scp /var/kerberos/krb5kdc/keytab/host.keytab hadoop2:/var/kerberos/krb5kdc/keytab/
+   [root@hadoop3 ~]# scp /var/kerberos/krb5kdc/keytab/krb5.keytab hadoop2:/var/kerberos/krb5kdc/keytab/
    ```
 
 4. 在slave上创建数据库
@@ -502,6 +535,12 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    [root@hadoop3 ~]# vim /var/kerberos/krb5kdc/kpropd.acl
    host/hadoop1@HADOOP.COM
    host/hadoop2@HADOOP.COM
+   kiprop/hadoop1@HADOOP.COM
+   kiprop/hadoop2@HADOOP.COM
+   [root@hadoop3 ~]# vim /var/kerberos/krb5kdc/kadm5.acl
+   */admin@HADOOP.COM	*
+   kiprop/hadoop1@HADOOP.COM    p
+   kiprop/hadoop2@HADOOP.COM    p
    ```
 
 6. 在slave上启动kpropd服务
@@ -509,7 +548,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    ```bash
    # 修改KPROPD_ARGS参数，设置自定义的host.keytab文件，默认为/etc/krb5.keytab
    [root@hadoop3 ~]# vim /etc/sysconfig/kprop
-   KPROPD_ARGS=-s /var/kerberos/krb5kdc/keytab/host.keytab
+   KPROPD_ARGS=-s /var/kerberos/krb5kdc/keytab/krb5.keytab
    
    #启动kprop并设置开机启动
    [root@hadoop3 ~]# systemctl daemon-reload
@@ -524,7 +563,7 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
    #备份数据库
    [root@hadoop3 ~]# kdb5_util dump /var/kerberos/krb5kdc/dump/kdc.dump
    #同步到slave节点
-   [root@hadoop1 keytab]# kprop -f /var/kerberos/krb5kdc/dump/kdc.dump -s /var/kerberos/krb5kdc/keytab/host.keytab  hadoop2
+   [root@hadoop1 keytab]# kprop -f /var/kerberos/krb5kdc/dump/kdc.dump -s /var/kerberos/krb5kdc/keytab/krb5.keytab  hadoop2
    Database propagation to hadoop2: SUCCEEDED
    ```
 
