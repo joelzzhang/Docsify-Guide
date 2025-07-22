@@ -12,7 +12,7 @@
 
 - 离线获取访问[zookeeper官方网站](https://zookeeper.apache.org/releases.html)下载
 
-> [!TIP|lable:zookeeper官方文档]
+> [!TIP|label:zookeeper官方文档]
 >
 > https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index
 
