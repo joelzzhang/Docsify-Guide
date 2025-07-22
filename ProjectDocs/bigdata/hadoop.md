@@ -1,8 +1,6 @@
 ## 一. 环境准备
 
-
-
-## 二. 环境规划
+### 1. 环境规划
 
 | IP             | hostname  | 角色                                                         | 组件                                                         |
 | -------------- | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -11,24 +9,55 @@
 | 192.168.31.102 | bigdata03 | Zookeeper、JournalNode、DataNode  、NodeManager、ZKFC、KDC   | HDFS、YARN、Zookeeper、krb5-server、krb5-workstation、krb5-libs |
 | 192.168.31.103 | bigdata04 | DataNode 、NodeManager、KDC                                  | HDFS、YARN、krb5-server、krb5-workstation、krb5-libs         |
 
-## 三. HDFS配置高可用集群
-
-### 1. 配置hadoop-env.sh
+### 2. 安装包准备
 
 ```shell
-export JAVA_HOME=/opt/jdk1.8.0_381
+tar -zxvf hadoop-3.3.6.tar.gz -C /opt
+```
+
+### 3. 配置环境变量
+
+```shell
+# 将hadoop-3.3.6软连接到/usr/local/hadoop3
+ln -s /opt/hadoop-3.3.6 /usr/local/hadoop3
+
+# 添加hadoop.sh，配置HADOOP_HOME的环境变量
+vim /etc/profile.d/hadoop.sh
+#!/bin/bash
+
+export HADOOP_HOME=/usr/local/hadoop3
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin 
+```
+
+### 4. 数据盘挂载
+
+## 二. HADOOP高可用集群
+
+### 1.  配置hadoop-env.sh
+
+```shell
+export JAVA_HOME=/usr/local/java/jdk-11.0.28
 ```
 
 ### 2. 配置core-site.xml
 
 ```xml
 <configuration>
-    <!-- 把多个 NameNode 的地址组装成一个集群 mycluster -->
+    <!-- namenode的hdfs协议文件系统的通信地址，客户端连接HDFS时，为Hadoop客户端配置默认的高可用路径前缀 -->
     <property>
         <name>fs.defaultFS</name>
-        <value>hdfs://mycluster</value>
+        <value>hdfs://hadoopcluster</value>
     </property>
-    <!-- 指定 hadoop 运行时产生文件的存储目录 -->
+
+    <!-- 
+		指定 hadoop 运行时产生文件的存储目录
+		Hadoop数据存放的路径，namenode,datanode数据存放路径都依赖本路径。
+		不要使用"file:///"开头，使用绝对路径即可。
+		namenode默认存储路径:
+			file://${hadoop.tmp.dir}/dfs/name			
+		datanode默认存储路径
+			file://${hadoop.tmp.dir}/dfs/data
+	-->
     <property>
         <name>hadoop.tmp.dir</name>
         <value>/data/hadoop</value>
@@ -60,74 +89,93 @@ export JAVA_HOME=/opt/jdk1.8.0_381
         <name>dfs.namenode.name.dir</name>
         <value>file://${hadoop.tmp.dir}/name</value>
     </property>
-    <!-- DataNode 数据存储目录 -->
+    <!-- DataNode 数据存储目录，多个目录则用,分割 -->
     <property>
         <name>dfs.datanode.data.dir</name>
-        <value>file://${hadoop.tmp.dir}/data</value>
+        <value>/data01/hdfs</value>
     </property>
     <!-- JournalNode 数据存储目录 -->
     <property>
         <name>dfs.journalnode.edits.dir</name>
-        <value>${hadoop.tmp.dir}/jn</value>
+        <value>${hadoop.tmp.dir}/journalnode</value>
     </property>
+    
+    <!-- blocksize 数据块大小128M -->
     <property>
-    <name>dfs.blocksize</name>
+    	<name>dfs.blocksize</name>
         <value>134217728</value>
     </property>
+    <!-- datanode进行传输数据的最大线程数 -->
     <property>
         <name>dfs.datanode.max.transfer.threads</name>
-        <value>40960</value>
+        <value>4096</value>
     </property>
+    <!-- 数据副本数量 -->
     <property>
         <name>dfs.replication</name>
-        <value>3</value>
+        <value>2</value>
     </property>
+    
+    <!-- 集群内部通信名称 -->
     <property>
         <name>dfs.internal.nameservices</name>
-        <value>mycluster</value>
+        <value>hadoopcluster</value>
     </property>
     <!-- 完全分布式集群名称 -->
     <property>
         <name>dfs.nameservices</name>
-        <value>mycluster</value>
+        <value>hadoopcluster</value>
     </property>
     <!-- 集群中 NameNode 节点都有哪些 -->
     <property>
-        <name>dfs.ha.namenodes.mycluster</name>
+        <name>dfs.ha.namenodes.hadoopcluster</name>
         <value>nn1,nn2</value>
     </property>
+    
     <!-- NameNode 的 RPC 通信地址 -->
     <property>
-        <name>dfs.namenode.rpc-address.mycluster.nn1</name>
-        <value>hadoop1:8020</value>
+        <name>dfs.namenode.rpc-address.hadoopcluster.nn1</name>
+        <value>hadoop1:53310</value>
     </property>
     <property>
-        <name>dfs.namenode.rpc-address.mycluster.nn2</name>
-        <value>hadoop3:8020</value>
+        <name>dfs.namenode.rpc-address.hadoopcluster.nn2</name>
+        <value>hadoop3:53310</value>
     </property>
+    
     <!-- NameNode 的 http 通信地址 -->
     <property>
-        <name>dfs.namenode.http-address.mycluster.nn1</name>
-        <value>hadoop1:9870</value>
+        <name>dfs.namenode.http-address.hadoopcluster.nn1</name>
+        <value>hadoop1:50070</value>
     </property>
     <property>
-        <name>dfs.namenode.http-address.mycluster.nn2</name>
-        <value>hadoop3:9870</value>
+        <name>dfs.namenode.http-address.hadoopcluster.nn2</name>
+        <value>hadoop3:50070</value>
     </property>
+    
     <!-- 指定 NameNode 元数据在 JournalNode 上的存放位置 -->
     <property>
         <name>dfs.namenode.shared.edits.dir</name>
-        <value>qjournal://hadoop1:8485;hadoop2:8485;hadoop3:8485/mycluster</value>
+        <value>qjournal://hadoop1:8485;hadoop2:8485;hadoop3:8485/hadoopcluster</value>
     </property>
+    <property>
+    	<name>dfs.journalnode.rpc-address</name>
+    	<value>0.0.0.0:8485</value>
+  	</property>
+ 	<property>
+    	<name>dfs.journalnode.http-address</name>
+    	<value>0.0.0.0:8480</value>
+  	</property>
+    
     <!-- 访问代理类：client 用于确定哪个 NameNode 为 Active -->
     <property>
-        <name>dfs.client.failover.proxy.provider.mycluster</name>
+        <name>dfs.client.failover.proxy.provider.hadoopcluster</name>
         <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
     </property>
     <!-- 配置隔离机制，即同一时刻只能有一台服务器对外响应 -->
     <property>
         <name>dfs.ha.fencing.methods</name>
-        <value>sshfence</value>
+        <value>sshfence(hdfs:22)
+           shell(/bin/true)</value>
     </property>
     <!-- 使用隔离机制时需要 ssh 秘钥登录-->
     <property>
@@ -141,10 +189,7 @@ export JAVA_HOME=/opt/jdk1.8.0_381
     </property>
 </configuration>
 ```
-
-## 四. YARN配置高可用集群
-
-### 1. 配置yarn-site.xml
+### 4. 配置yarn-site.xml
 
 ```xml
 <configuration>
