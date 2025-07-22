@@ -12,9 +12,9 @@
 
 - 离线获取访问[zookeeper官方网站](https://zookeeper.apache.org/releases.html)下载
 
-> [!TIP|label:zookeeper官方文档]
->
-> https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index
+  > [!TIP|label:zookeeper官方文档]
+  >
+  > https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index
 
 ### 2. 分布式部署
 
