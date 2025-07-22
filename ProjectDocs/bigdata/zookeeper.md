@@ -439,7 +439,7 @@ QuorumLearner {
 
 > [!TIP]
 >
-> ${hostname}一般为主机名
+> `${hostname}`一般为主机名
 
 #### 2.5 问题总结
 
