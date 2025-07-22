@@ -336,14 +336,114 @@
 
 ### 1. Client-Server相互身份验证
 
+#### 1.1 keytab文件准备
+
+- 创建keytab文件
+
+  ```shell
+  # 在kdc master执行以下命令
+  kadmin.local -q "addprinc -pw 2wsx@WSX zkcli"
+  kadmin.local -q "xst -norandkey -k /var/kerberos/krb5kdc/keytab/zkcli.keytab zkcli"
+  ```
+
+- 分发keytab文件
+
+  ```shell
+  # 开始分发
+  scp /var/kerberos/krb5kdc/keytab/zkcli.keytab bigdata01:/usr/local/zookeeper/conf/keytab
+  scp /var/kerberos/krb5kdc/keytab/zkcli.keytab bigdata02:/usr/local/zookeeper/conf/keytab
+  scp /var/kerberos/krb5kdc/keytab/zkcli.keytab bigdata03:/usr/local/zookeeper/conf/keytab
+  ```
+
+#### 1.2 配置文件zoo.cfg
+
+```properties
+# 在conf/zoo.cfg配置文件中添加如下内容：
+sessionRequireClientSASLAuth=true
+authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+jaasLoginRenew=3600000
+#将principal对应的主机名去掉，防止hbase等服务访问zookeeper时报错，如GSS initiate failed时就有可能是该项没配置
+kerberos.removeHostFromPrincipal=true
+kerberos.removeRealmFromPrincipal=true
 ```
-kadmin.local -q "addprinc -pw 2wsx@WSX zkcli"
-kadmin.local -q "xst -norandkey -k /var/kerberos/krb5kdc/keytab/zkcli.keytab zkcli"
 
+#### 1.3 配置文件java.env
 
+```properties
+
+# REQUIRED SASL RELATED CONFIGS:
+# ==== java.security.auth.login.config:
+# Defining your client side JAAS config file path:
+CLIENT_JVMFLAGS="${CLIENT_JVMFLAGS} -Djava.security.auth.login.config=/usr/local/zookeeper/conf/jaas/jaas.conf -Djava.security.krb5.conf=/etc/krb5.conf"
+ 
+# OPTIONAL SASL RELATED CONFIGS:
+ 
+# ==== zookeeper.sasl.client:
+# You can disable SASL authentication on the client side (it is true by default):
+# CLIENT_JVMFLAGS="${CLIENT_JVMFLAGS} -Dzookeeper.sasl.client=false"
+ 
+ 
+# ==== zookeeper.server.principal:
+# Setting the server principal of the ZooKeeper service. If this configuration is provided, then
+# the ZooKeeper client will NOT USE any of the following parameters to determine the server principal:
+# zookeeper.sasl.client.username, zookeeper.sasl.client.canonicalize.hostname, zookeeper.server.realm
+# Note: this config parameter is working only for ZooKeeper 3.5.7+, 3.6.0+
+# CLIENT_JVMFLAGS="${CLIENT_JVMFLAGS} -Dzookeeper.server.principal=zookeeper@EXAMPLE.COM"
+ 
+ 
+# ==== zookeeper.sasl.client.username:
+# Setting the 'user' part of the server principal of the ZooKeeper service, assuming the
+# zookeeper.server.principal parameter is not provided. When you have zookeeper/myhost@EXAMPLE.COM
+# defined in your server side SASL config, then use:
+# CLIENT_JVMFLAGS="${CLIENT_JVMFLAGS} -Dzookeeper.sasl.client.username=zookeeper"
+ 
+ 
+# ==== zookeeper.sasl.client.canonicalize.hostname:
+# Assuming the zookeeper.server.principal parameter is not provided, the ZooKeeper client will try to
+# determine the 'instance' (host) part of the ZooKeeper server principal. First it takes the hostname provided
+# as the ZooKeeper server connection string. Then it tries to 'canonicalize' the address by getting
+# the fully qualified domain name belonging to the address. You can disable this 'canonicalization'
+# using the following config:
+# CLIENT_JVMFLAGS="${CLIENT_JVMFLAGS} -Dzookeeper.sasl.client.canonicalize.hostname=false"
+ 
+ 
+# ==== zookeeper.server.realm:
+# Setting the 'realm' part of the server principal of the ZooKeeper service, assuming the
+# zookeeper.server.principal parameter is not provided. By default, in this case the ZooKeeper Client
+# will use its own realm. You can override this, e.g. when you have zookeeper/myhost@EXAMPLE.COM
+# defined in your server side SASL config, then use:
+# CLIENT_JVMFLAGS="${CLIENT_JVMFLAGS} -Dzookeeper.server.realm=EXAMPLE.COM"
+ 
+ 
+# ==== zookeeper.sasl.clientconfig:
+# you can have multiple contexts defined in a JAAS.conf file. ZooKeeper client is using the section
+# named as 'Client' by default. You can override it if you wish, by using:
+# CLIENT_JVMFLAGS="${CLIENT_JVMFLAGS} -Dzookeeper.sasl.clientconfig=Client"
 ```
 
+#### 1.4 配置文件jaas.conf
 
+```shell
+Server {
+       com.sun.security.auth.module.Krb5LoginModule required
+       useKeyTab=true
+       keyTab="/usr/local/zookeeper/conf/keytab/zookeeper.keytab"
+       storeKey=true
+       useTicketCache=false
+       debug=true
+       principal="zookeeper/${hostname}@HADOOP.COM";
+};
+
+Client {
+       com.sun.security.auth.module.Krb5LoginModule required
+       useKeyTab=true
+       keyTab="/usr/local/zookeeper/conf/keytab/zkcli.keytab"
+       storeKey=true
+       useTicketCache=false
+       debug=true
+       principal="zkcli@HADOOP.COM";
+};
+```
 
 ### 2. Server-Server相互身份验证
 
@@ -405,7 +505,7 @@ quorum.cnxn.threads.size=6
 touch /usr/local/zookeeper/conf/java.env
 
 vim /usr/local/zookeeper/conf/java.env
-SERVER_JVMFLAGS="-Djava.security.auth.login.config=/usr/local/zookeeper/conf/jaas/jaas.conf"
+SERVER_JVMFLAGS="-Djava.security.auth.login.config=/usr/local/zookeeper/conf/jaas/jaas.conf -Djava.security.krb5.conf=/etc/krb5.conf"
 ```
 
 #### 2.4 配置文件jaas.conf
