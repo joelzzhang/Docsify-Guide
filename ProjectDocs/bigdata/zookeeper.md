@@ -1,4 +1,8 @@
-## 安装包获取
+
+
+## 一. 集群部署
+
+### 1. 安装包获取
 
 - 在线获取
 
@@ -8,7 +12,7 @@
 
 - 离线获取访问[zookeeper官方网站](https://zookeeper.apache.org/releases.html)下载
 
-## 分布式部署
+### 2. 分布式部署
 
 1. 解压安装
 
@@ -108,7 +112,7 @@
      Mode: leader
      ```
 
-## 客户端操作命令
+## 二. 客户端操作命令
 
 - 启动客户端
 
@@ -316,27 +320,149 @@
   numChildren = 1
   ```
 
-## API应用
+## 三. API应用
 
-## Zookeeper内部原理
+## 四. Zookeeper内部原理
 
-### 选举机制
+### 1. 选举机制
 
-### 节点类型
+### 2. 节点类型
 
-### stat结构体
+### 3. stat结构体
 
-### 写数据流程
+### 4. 写数据流程
 
-## Zookeeper SASL
+## 五. Zookeeper SASL
 
-### Client-Server相互身份验证
+### 1. Client-Server相互身份验证
 
-
-
-### Server-Server相互身份验证
-
-
+```
+kadmin.local -q "addprinc -pw 2wsx@WSX zkcli"
+kadmin.local -q "xst -norandkey -k /var/kerberos/krb5kdc/keytab/zkcli.keytab zkcli"
 
 
+```
 
+
+
+### 2. Server-Server相互身份验证
+
+#### 2.1 keytab文件准备
+
+- 创建keytab文件
+
+  ```shell
+  # 在kdc master执行以下命令
+  kadmin.local -q "addprinc -pw 2wsx@WSX zookeeper/bigdata01"
+  kadmin.local -q "addprinc -pw 2wsx@WSX zookeeper/bigdata02"
+  kadmin.local -q "addprinc -pw 2wsx@WSX zookeeper/bigdata03"
+  kadmin.local -q "xst -norandkey -k /var/kerberos/krb5kdc/keytab/zookeeper.keytab zookeeper/bigdata01"
+  kadmin.local -q "xst -norandkey -k /var/kerberos/krb5kdc/keytab/zookeeper.keytab zookeeper/bigdata02"
+  kadmin.local -q "xst -norandkey -k /var/kerberos/krb5kdc/keytab/zookeeper.keytab zookeeper/bigdata03"
+  ```
+
+- 分发keytab文件
+
+  ```shell
+  # 在kdc master执行以下命令
+  ssh bigdata01 "mkdir -p /usr/local/zookeeper/conf/keytab"
+  ssh bigdata02 "mkdir -p /usr/local/zookeeper/conf/keytab"
+  ssh bigdata03 "mkdir -p /usr/local/zookeeper/conf/keytab"
+  # 开始分发
+  scp /var/kerberos/krb5kdc/keytab/zookeeper.keytab bigdata01:/usr/local/zookeeper/conf/keytab
+  scp /var/kerberos/krb5kdc/keytab/zookeeper.keytab bigdata02:/usr/local/zookeeper/conf/keytab
+  scp /var/kerberos/krb5kdc/keytab/zookeeper.keytab bigdata03:/usr/local/zookeeper/conf/keytab
+  scp /var/kerberos/krb5kdc/keytab/zkcli.keytab  bigdata01:/usr/local/zookeeper/conf/keytab
+  scp /var/kerberos/krb5kdc/keytab/zkcli.keytab  bigdata02:/usr/local/zookeeper/conf/keytab
+  scp /var/kerberos/krb5kdc/keytab/zkcli.keytab  bigdata03:/usr/local/zookeeper/conf/keytab
+  ```
+
+- 分发krb5.conf
+
+  ```shell
+  scp /etc/krb5.conf bigdata01:/etc
+  scp /etc/krb5.conf bigdata02:/etc
+  scp /etc/krb5.conf bigdata03:/etc
+  ```
+
+#### 2.2 配置文件zoo.cfg
+
+添加以下配置
+
+```properties
+quorum.auth.enableSasl=true
+quorum.auth.learnerRequireSasl=true
+quorum.auth.serverRequireSasl=true
+quorum.auth.learner.saslLoginContext=QuorumLearner
+quorum.auth.server.saslLoginContext=QuorumServer
+quorum.auth.kerberos.servicePrincipal=zookeeper/_HOST
+quorum.cnxn.threads.size=6
+```
+
+#### 2.3 配置文件java.env
+
+```shell
+touch /usr/local/zookeeper/conf/java.env
+
+vim /usr/local/zookeeper/conf/java.env
+SERVER_JVMFLAGS="-Djava.security.auth.login.config=/usr/local/zookeeper/conf/jaas/jaas.conf"
+```
+
+#### 2.4 配置文件jaas.conf
+
+```shell
+ssh bigdata01 "mkdir -p /usr/local/zookeeper/conf/jaas"
+ssh bigdata02 "mkdir -p /usr/local/zookeeper/conf/jaas"
+ssh bigdata03 "mkdir -p /usr/local/zookeeper/conf/jaas"
+
+touch /usr/local/zookeeper/conf/jaas/jaas.conf
+QuorumServer {
+       com.sun.security.auth.module.Krb5LoginModule required
+       useKeyTab=true
+       keyTab="/usr/local/zookeeper/conf/keytab/zookeeper.keytab"
+       storeKey=true
+       useTicketCache=false
+       debug=true
+       principal="zookeeper/${hostname}@HADOOP.COM";
+};
+ 
+QuorumLearner {
+       com.sun.security.auth.module.Krb5LoginModule required
+       useKeyTab=true
+       keyTab="/usr/local/zookeeper/conf/keytab/zookeeper.keytab"
+       storeKey=true
+       useTicketCache=false
+       debug=true
+       principal="zookeeper/${hostname}@HADOOP.COM";
+};
+```
+
+> [!TIP]
+>
+> ${hostname}一般为主机名
+
+#### 2.5 问题总结
+
+- No password provided问题
+
+  ```
+  javax.security.sasl.SaslException: Failed to initialize authentication mechanism using SASL
+  	at org.apache.zookeeper.server.quorum.auth.SaslQuorumAuthServer.<init>(SaslQuorumAuthServer.java:63)
+  	at org.apache.zookeeper.server.quorum.QuorumPeer.initialize(QuorumPeer.java:1115)
+  	at org.apache.zookeeper.server.quorum.QuorumPeerMain.runFromConfig(QuorumPeerMain.java:223)
+  	at org.apache.zookeeper.server.quorum.QuorumPeerMain.initializeAndRun(QuorumPeerMain.java:137)
+  	at org.apache.zookeeper.server.quorum.QuorumPeerMain.main(QuorumPeerMain.java:91)
+  Caused by: javax.security.auth.login.LoginException: No password provided
+  ```
+
+  需要检查jaas.conf配置文件里面的keyTab和principal配置是否正确
+
+- Encryption type Unknown (20) is not supported/enabled问题
+
+  ```
+  Caused by: sun.security.krb5.KrbException: Encryption type Unknown (20) is not supported/enabled
+  ```
+
+  这个是因为jce的问题，Java 加密扩展（JCE）原生的 API 存在一定的限制，比如说加密的长度等，Oracle 官方提供的解决办法是，下载新的加密 jar 包替换本地 jdk 或者 jre 目录下原生的 jar 包。下载地址： [Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files for JDK/JRE Download](https://www.oracle.com/java/technologies/javase-jce-all-downloads.html)。
+
+  JDK9 及更高版本附带了无限制策略文件，并在默认情况下使用，所以不需要再额外处理，对于低版本则需要更新

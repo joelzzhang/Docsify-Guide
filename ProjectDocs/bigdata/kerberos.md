@@ -768,6 +768,28 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
   [root@hadoop3 ~]# klist 
   Ticket cache: FILE:/tmp/krb5cc_0
   Default principal: nm/yjt@HADOOP.COM
+  # 获取当前已认证的所有凭证
+  [root@hadoop3 ~]# klist -A
+  Ticket cache: KCM:0:17445
+  Default principal: zookeeper/bigdata05@HADOOP.COM
+  
+  Valid starting       Expires              Service principal
+  2025-07-21T21:31:38  2025-07-22T21:31:14  krbtgt/HADOOP.COM@HADOOP.COM
+  	renew until 2025-07-28T21:31:14
+  
+  Ticket cache: KCM:0:69052
+  Default principal: kiprop/bigdata04@HADOOP.COM
+  
+  Valid starting       Expires              Service principal
+  2025-07-20T01:16:11  2025-07-21T01:16:11  krbtgt/HADOOP.COM@HADOOP.COM
+  	renew until 2025-07-27T01:16:11
+  
+  Ticket cache: KCM:0
+  Default principal: host/bigdata04@HADOOP.COM
+  
+  Valid starting       Expires              Service principal
+  2025-07-20T01:15:39  2025-07-21T01:15:39  krbtgt/HADOOP.COM@HADOOP.COM
+  	renew until 2025-07-27T01:15:39
   ```
 
 - **删除当前认证的缓存**
