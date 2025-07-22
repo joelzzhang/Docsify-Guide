@@ -416,6 +416,7 @@ ssh bigdata02 "mkdir -p /usr/local/zookeeper/conf/jaas"
 ssh bigdata03 "mkdir -p /usr/local/zookeeper/conf/jaas"
 
 touch /usr/local/zookeeper/conf/jaas/jaas.conf
+vim /usr/local/zookeeper/conf/jaas/jaas.conf
 QuorumServer {
        com.sun.security.auth.module.Krb5LoginModule required
        useKeyTab=true
