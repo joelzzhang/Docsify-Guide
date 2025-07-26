@@ -360,7 +360,7 @@ hadoop3
 
 ## 三. HADOOP高可用集群初始化
 
-> [TIP|label:配置参考]
+> [TIP|lable:配置参考]
 >
 > https://hadoop.apache.org/docs/r3.3.6/hadoop-project-dist/hadoop-common/ClusterSetup.html
 
