@@ -360,6 +360,10 @@ hadoop3
 
 ## 三. HADOOP高可用集群初始化
 
+> [TIP|label:配置参考]
+>
+> https://hadoop.apache.org/docs/r3.3.6/hadoop-project-dist/hadoop-common/ClusterSetup.html
+
 ### 1. 启动Zookeeper集群
 
 在每个`Zookeeper`节点上启动`Zookeeper`
