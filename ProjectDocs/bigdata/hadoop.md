@@ -36,6 +36,10 @@ source /etc/profile
 
 ## 二. HADOOP高可用集群配置
 
+> [!TIP|label:配置参考]
+>
+> https://hadoop.apache.org/docs/r3.3.6/hadoop-project-dist/hadoop-common/ClusterSetup.html
+
 ### 1.  配置hadoop-env.sh
 
 ```shell
@@ -359,10 +363,6 @@ hadoop3
 ```
 
 ## 三. HADOOP高可用集群初始化
-
-> [!TIP|label:配置参考]
->
-> https://hadoop.apache.org/docs/r3.3.6/hadoop-project-dist/hadoop-common/ClusterSetup.html
 
 ### 1. 启动Zookeeper集群
 
