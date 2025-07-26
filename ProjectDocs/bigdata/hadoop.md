@@ -438,6 +438,72 @@ start-dfs.sh
 stop-dfs.sh
 ```
 
+验证集群：
+
+```bash
+[root@bigdata01 hadoop3]# hdfs dfsadmin -report
+Configured Capacity: 64288194560 (59.87 GB)
+Present Capacity: 63771869184 (59.39 GB)
+DFS Remaining: 62271758336 (58.00 GB)
+DFS Used: 1500110848 (1.40 GB)
+DFS Used%: 2.35%
+Replicated Blocks:
+	Under replicated blocks: 22
+	Blocks with corrupt replicas: 0
+	Missing blocks: 0
+	Missing blocks (with replication factor 1): 0
+	Low redundancy blocks with highest priority to recover: 0
+	Pending deletion blocks: 0
+Erasure Coded Block Groups: 
+	Low redundancy block groups: 0
+	Block groups with corrupt internal blocks: 0
+	Missing block groups: 0
+	Low redundancy blocks with highest priority to recover: 0
+	Pending deletion blocks: 0
+
+-------------------------------------------------
+Live datanodes (2):
+
+Name: 192.168.31.102:9866 (bigdata03)
+Hostname: bigdata03
+Decommission Status : Normal
+Configured Capacity: 32144097280 (29.94 GB)
+DFS Used: 750055424 (715.31 MB)
+Non DFS Used: 258162688 (246.20 MB)
+DFS Remaining: 31135879168 (29.00 GB)
+DFS Used%: 2.33%
+DFS Remaining%: 96.86%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 0
+Last contact: Sat Jul 26 09:07:53 CST 2025
+Last Block Report: Sat Jul 26 08:57:23 CST 2025
+Num of Blocks: 100
+
+
+Name: 192.168.31.103:9866 (bigdata04)
+Hostname: bigdata04
+Decommission Status : Normal
+Configured Capacity: 32144097280 (29.94 GB)
+DFS Used: 750055424 (715.31 MB)
+Non DFS Used: 258162688 (246.20 MB)
+DFS Remaining: 31135879168 (29.00 GB)
+DFS Used%: 2.33%
+DFS Remaining%: 96.86%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 0
+Last contact: Sat Jul 26 09:07:53 CST 2025
+Last Block Report: Sat Jul 26 08:57:23 CST 2025
+Num of Blocks: 100
+```
+
 ### 7. 启动YARN集群
 
 由于zookeeper集群做了sasl强校验，所以需要在yarn-env.sh里面做jaas.conf相关的配置，配置如下：
