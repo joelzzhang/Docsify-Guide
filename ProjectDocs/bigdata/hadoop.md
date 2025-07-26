@@ -328,7 +328,7 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
 		<name>mapreduce.framework.name</name>
 		<value>yarn</value>
 	</property>
-
+	<!-- 设置环境变量，多个值用逗号分隔，也可以在mapreduce程序中通过-Dyarn.app.mapreduce.am.env.HADOOP_MAPRED_HOME=XXX来设置 -->
     <property>
       <name>yarn.app.mapreduce.am.env</name>
       <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
