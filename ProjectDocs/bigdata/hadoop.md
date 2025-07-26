@@ -469,7 +469,7 @@ bigdata02:8033                                     standby
 
 在`JobHistoryServer`节点启动`historyserver`服务
 
-```
+```bash
 mapred --daemon start historyserver
 ```
 
@@ -478,6 +478,34 @@ mapred --daemon start historyserver
 ```
 hadoop jar /usr/local/hadoop3/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar wordcount /tmp/hadoop-root-namenode-bigdata01.log /root/wordcount/data2
 ```
+
+在验证`mapreduce`时遇到的问题
+
+```latex
+[2025-07-25 14:35:38.800]Container exited with a non-zero exit code 1. Error file: prelaunch.err.
+Last 4096 bytes of prelaunch.err :
+Last 4096 bytes of stderr :
+Error: Could not find or load main class org.apache.hadoop.mapreduce.v2.app.MRAppMaster
+Caused by: java.lang.ClassNotFoundException: org.apache.hadoop.mapreduce.v2.app.MRAppMaster
+
+Please check whether your <HADOOP_HOME>/etc/hadoop/mapred-site.xml contains the below configuration:
+<property>
+  <name>yarn.app.mapreduce.am.env</name>
+  <value>HADOOP_MAPRED_HOME=${full path of your hadoop distribution directory}</value>
+</property>
+<property>
+  <name>mapreduce.map.env</name>
+  <value>HADOOP_MAPRED_HOME=${full path of your hadoop distribution directory}</value>
+</property>
+<property>
+  <name>mapreduce.reduce.env</name>
+  <value>HADOOP_MAPRED_HOME=${full path of your hadoop distribution directory}</value>
+</property>
+```
+
+因为我在`mapred-site.xml`的`yarn.app.mapreduce.am.env`、`mapreduce.map.env`、`mapreduce.reduce.env`属性里面配置了`HADOOP_MAPRED_HOME=${HADOOP_HOME}`，在Java进程里面无法通过`${HADOOP_HOME}`来获取环境变量值，所以需要将`${HADOOP_HOME}`改成绝对路径`/usr/local/haddop3`即可
+
+
 
 
 
