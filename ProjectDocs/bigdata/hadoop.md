@@ -475,7 +475,7 @@ mapred --daemon start historyserver
 
 验证`mapreduce`：
 
-```
+```bash
 hadoop jar /usr/local/hadoop3/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.6.jar wordcount /tmp/hadoop-root-namenode-bigdata01.log /root/wordcount/data2
 ```
 
