@@ -424,14 +424,14 @@ hdfs namenode -bootstrapStandby
 hadoop3.X新特性，需要在`${HADOOP_HOME}/sbin`目录下，`start-dfs.sh`,`stop-dfs.sh`,`start-yarn.sh`,`stop-yarn.sh`内，分别新增如下配置： 
 
 ```properties
-HDFS_NAMENODE_USER=root
-HDFS_DATANODE_USER=root
-HDFS_JOURNALNODE_USER=root
-HDFS_ZKFC_USER=root
-HDFS_DATANODE_SECURE_USER=root
-HDFS_SECONDARYNAMENODE_USER=root
-YARN_NODEMANAGER_USER=root
-YARN_RESOURCEMANAGER_USER=root
+HDFS_NAMENODE_USER=hdfs
+HDFS_DATANODE_USER=hdfs
+HDFS_JOURNALNODE_USER=hdfs
+HDFS_ZKFC_USER=hdfs
+HDFS_DATANODE_SECURE_USER=hdfs
+HDFS_SECONDARYNAMENODE_USER=hdfs
+YARN_NODEMANAGER_USER=yarn
+YARN_RESOURCEMANAGER_USER=yarn
 ```
 
 并在`master`节点对集群的其他节点进行免密登录配置，然后执行以下命令：
@@ -575,6 +575,229 @@ Please check whether your <HADOOP_HOME>/etc/hadoop/mapred-site.xml contains the 
 ```
 
 因为我在`mapred-site.xml`的`yarn.app.mapreduce.am.env`、`mapreduce.map.env`、`mapreduce.reduce.env`属性里面配置了`HADOOP_MAPRED_HOME=${HADOOP_HOME}`，在Java进程里面无法通过`${HADOOP_HOME}`来获取环境变量值，所以需要将`${HADOOP_HOME}`改成绝对路径`/usr/local/haddop3`即可
+
+## 四.Hadoop整合Kerberos
+
+### 1. 创建Hadoop集群用户
+
+```bash
+# 创建hadoop组
+groupadd hadoop
+# 创建hdfs用户
+useradd -g hadoop -m -s /bin/bash hdfs
+echo "123456" | sudo passwd --stdin hdfs
+# 创建yarn用户
+useradd -g hadoop -m -s /bin/bash yarn
+echo "123456" | sudo passwd --stdin yarn
+# 创建mapred用户
+useradd -g hadoop -m -s /bin/bash mapred
+echo "123456" | sudo passwd --stdin mapred
+```
+
+### 2. Hadoop集群目录权限调整
+
+1. 创建日志目录
+
+   ```bash
+   mkdir -p /var/log/hadoop/hadoop-hdfs /var/log/hadoop/hadoop-yarn /var/log/hadoop/hadoop-mapred
+   ```
+
+2. 为日志目录赋权
+
+   ```bash
+   chown -R yarn:hadoop /var/log/hadoop/hadoop-yarn 
+   chown -R mapred:hadoop /var/log/hadoop/hadoop-mapred
+   chown -R hdfs:hadoop /var/log/hadoop/hadoop-hdfs
+   chmod -R 755 /var/log/hadoop/*
+   ```
+
+3. 数据目录权限调整
+
+   ```bash
+   # master节点
+   chown -R hdfs:hadoop /data/hadoop
+   chmod -R 755 /data/hadoop
+   chmod 644 /usr/local/zookeeper/conf/keytab/zkcli.keytab
+   # slave节点
+   chown -R hdfs:hadoop /data01/hdfs
+   chmod -R 755 /data01/hdfs
+   ```
+
+### 3. 配置core-site.xml
+
+```xml
+<!--启用Kerberos安全认证-->
+<property>
+  <name>hadoop.security.authentication</name>
+  <value>kerberos</value>
+  <description>Possible values are simple (no authentication), and kerberos</description>
+</property>
+<!--启用Hadoop集群授权管理-->
+<property>
+  <name>hadoop.security.authorization</name>
+  <value>true</value>
+  <description>Is service-level authorization enabled?</description>
+</property>
+<!--Kerberos主体到Hadoop用户的具体映射规则-->
+<property>
+  <name>hadoop.security.auth_to_local</name>
+  <value></value>
+  <description>Maps kerberos principals to local user names</description>
+</property>
+<!--外部系统用户身份映射到Hadoop用户的机制-->
+<property>
+  <name>hadoop.security.auth_to_local.mechanism</name>
+  <value>hadoop</value>
+  <description>The mechanism by which auth_to_local rules are evaluated.
+    If set to 'hadoop' it will not allow resulting local user names to have
+    either '@' or '/'. If set to 'MIT' it will follow MIT evaluation rules
+    and the restrictions of 'hadoop' do not apply.</description>
+</property>
+```
+
+### 4. 配置hdfs-site.xml
+
+```xml
+<!-- 使用隔离机制时需要 ssh 秘钥登录-->
+<property>
+  <name>dfs.ha.fencing.ssh.private-key-files</name>
+  <value>/home/hdfs/.ssh/id_rsa</value>
+</property>
+<!--开启访问DataNode数据库需要Kerberos认证-->
+<property>
+  <name>dfs.block.access.token.enable</name>
+  <value>true</value>
+</property>
+<!--NameNode服务的Kerberos主体-->
+<property>
+  <name>dfs.namenode.kerberos.principal</name>
+  <value>hdfs/_HOST@HADOOP.COM</value>
+</property>
+<!--NameNode服务的keytab文件位置-->
+<property>
+  <name>dfs.namenode.keytab.file</name>
+  <value>/etc/security/keytab/hdfs.keytab</value>
+</property>
+<!--DataNode服务的Kerberos主体-->
+<property>
+  <name>dfs.datanode.kerberos.principal</name>
+  <value>hdfs/_HOST@HADOOP.COM</value>
+</property>
+<!--DataNode服务的keytab文件位置-->
+<property>
+  <name>dfs.datanode.keytab.file</name>
+  <value>/etc/security/keytab/hdfs.keytab</value>
+</property>
+<!--JournalNode服务的Kerberos主体-->
+<property>
+  <name>dfs.journalnode.kerberos.principal</name>
+  <value>hdfs/_HOST@HADOOP.COM</value>
+</property>
+<!--JournalNode服务的keytab文件位置-->
+<property>
+  <name>dfs.journalnode.keytab.file</name>
+  <value>/etc/security/keytab/hdfs.keytab</value>
+</property>
+
+<!--JournalNode Web UI服务的Kerberos主体-->
+<property>
+  <name>dfs.journalnode.kerberos.internal.spnego.principal</name>
+  <value>HTTP/_HOST@HADOOP.COM</value>
+</property>
+<!--NameNode Web UI服务的Kerberos主体-->
+<property>
+  <name>dfs.namenode.kerberos.internal.spnego.principal</name>
+  <value>HTTP/_HOST@HADOOP.COM</value>
+</property>
+<!--HDFS Web UI服务的Kerberos主体-->
+<property>
+  <name>dfs.web.authentication.kerberos.principal</name>
+  <value>HTTP/_HOST@HADOOP.COM</value>
+</property>
+<!--HDFS Web UI服务的keytab文件位置-->
+<property>
+  <name>dfs.web.authentication.kerberos.keytab</name>
+  <value>/etc/security/keytab/hdfs.keytab</value>
+</property>
+
+<property>
+  <name>dfs.namenode.kerberos.principal.pattern</name>
+  <value>*</value>
+</property>
+<property>
+  <name>dfs.datanode.address</name>
+  <value>0.0.0.0:1004</value>
+</property>
+<property>
+  <name>dfs.datanode.http.address</name>
+  <value>0.0.0.0:1006</value>
+</property>
+<property>
+  <name>dfs.datanode.data.dir.perm</name>
+  <value>700</value>
+</property>
+
+<!--配置HDFS支持HTTPS协议-->
+<property>
+  <name>dfs.http.policy</name>
+  <value>HTTPS_ONLY</value>
+  <description>Decide if HTTPS(SSL) is supported on HDFS
+    This configures the HTTP endpoint for HDFS daemons:
+    The following values are supported:
+    - HTTP_ONLY : Service is provided only on http
+    - HTTPS_ONLY : Service is provided only on https
+    - HTTP_AND_HTTPS : Service is provided both on http and https
+  </description>
+</property>
+
+<!--配置DataNode数据传输保护策略为仅授权模式-->
+<property>
+  <name>dfs.data.transfer.protection</name>
+  <value>authentication</value>
+  <description>
+    A comma-separated list of SASL protection values used for secured
+    connections to the DataNode when reading or writing block data. Possible
+    values are authentication, integrity and privacy. authentication means
+    authentication only and no integrity or privacy; integrity implies
+    authentication and integrity are enabled; and privacy implies all of
+    authentication, integrity and privacy are enabled. If
+    dfs.encrypt.data.transfer is set to true, then it supersedes the setting for
+    dfs.data.transfer.protection and enforces that all connections must use a
+    specialized encrypted SASL handshake. This property is ignored for
+    connections to a DataNode listening on a privileged port. In this case, it
+    is assumed that the use of a privileged port establishes sufficient trust.
+  </description>
+</property>
+```
+
+### 5. 配置yarn-site.xml
+
+```xml
+ <!--ResourceManager服务的Kerberos主体-->
+<property>
+  <name>yarn.resourcemanager.principal</name>
+  <value>yarn/_HOST@HADOOP.COM</value>
+</property>
+<!--ResourceManager服务的keytab文件位置-->
+<property>
+  <name>yarn.resourcemanager.keytab</name>
+  <value>/etc/security/keytab/yarn.keytab</value>
+</property>
+<!--NodeManager服务的Kerberos主体-->
+<property>
+  <name>yarn.nodemanager.principal</name>
+  <value>yarn/_HOST@HADOOP.COM</value>
+</property>
+<!--NodeManager服务的keytab文件位置-->
+<property>
+  <name>yarn.nodemanager.keytab</name>
+  <value>/etc/security/keytab/yarn.keytab</value>
+</property>
+```
+
+
+
+
 
 
 

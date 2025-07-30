@@ -9,6 +9,8 @@
 > https://www.mankier.com/7/kerberos
 >
 > https://k5wiki.kerberos.org/wiki/Projects/Hierarchical_iprop
+>
+> https://web.mit.edu/kerberos
 
 ### 1. 应用场景
 
