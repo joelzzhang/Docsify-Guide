@@ -51,39 +51,89 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
 
 ```xml
 <configuration>
-    <!-- namenode的hdfs协议文件系统的通信地址，客户端连接HDFS时，为Hadoop客户端配置默认的高可用路径前缀 -->
     <property>
         <name>fs.defaultFS</name>
         <value>hdfs://hadoopcluster</value>
+        <description>namenode的hdfs协议文件系统的通信地址,客户端连接HDFS时,为Hadoop客户端配置默认的高可用路径前缀</description>
     </property>
-
-    <!-- 
-		指定 hadoop 运行时产生文件的存储目录
-		Hadoop数据存放的路径，namenode,datanode数据存放路径都依赖本路径。
-		不要使用"file:///"开头，使用绝对路径即可。
-		namenode默认存储路径:
-			file://${hadoop.tmp.dir}/dfs/name			
-		datanode默认存储路径
-			file://${hadoop.tmp.dir}/dfs/data
-	-->
     <property>
         <name>hadoop.tmp.dir</name>
         <value>/data/hadoop</value>
+        <description>
+            指定 hadoop 运行时产生文件的存储目录
+            Hadoop数据存放的路径namenode,datanode数据存放路径都依赖本路径。
+            不要使用"file:///"开头，使用绝对路径即可。
+            namenode默认存储路径:
+            file://${hadoop.tmp.dir}/dfs/name
+            datanode默认存储路径
+            file://${hadoop.tmp.dir}/dfs/data
+        </description>
     </property>
-    <!-- 指定 zkfc 要连接的 zkServer 地址 -->
     <property>
         <name>ha.zookeeper.quorum</name>
         <value>hadoop1:2181,hadoop2:2181,hadoop3:2181</value>
+        <description>指定 zkfc 要连接的 zkServer 地址</description>
     </property>
-    <!-- NN 连接 JN 重试次数，默认是 10 次 -->
+    <property>
+        <name>ha.zookeeper.session-timeout.ms</name>
+        <value>8000</value>
+        <description>ZKFC连接到ZooKeeper的超时时长</description>
+    </property>
+    <property>
+        <name>ha.health-monitor.rpc-timeout.ms</name>
+        <value>180000</value>
+        <description>实际monitorHealth()调用超时时间</description>
+    </property>
     <property>
         <name>ipc.client.connect.max.retries</name>
         <value>20</value>
+        <description>NN 连接 JN 重试次数，默认是 10 次</description>
     </property>
-    <!-- 重试时间间隔，默认 1s -->
+    <property>
+        <name>ipc.client.connection.maxidletime</name>
+        <value>30000</value>
+        <description>空间连接断开时间，单位为毫秒</description>
+    </property>
     <property>
         <name>ipc.client.connect.retry.interval</name>
         <value>5000</value>
+        <description>重试时间间隔，默认 1s</description>
+    </property>
+    <property>
+        <name>io.compression.codec.lzo.class</name>
+        <value>com.hadoop.compression.lzo.LzoCodec</value>
+        <description>配置lzo编解码器相关参数</description>
+    </property>
+    <property>
+        <name>io.compression.codecs</name>
+        <value>
+            org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.SnappyCodec,com.hadoop.compression.lzo.LzoCodec,com.hadoop.compression.lzo.LzopCodec</value>
+        <description>一组可用于压缩/解压缩的表列表, 使用逗号进行分隔</description>
+    </property>
+    <property>
+        <name>io.file.buffer.size</name>
+        <value>131072</value>
+        <description>在序列文件中使用的缓冲区大小</description>
+    </property>
+    <property>
+        <name>fs.du.interval</name>
+        <value>43200000</value>
+        <description>文件空间使用统计情况的刷新时间间隔</description>
+    </property>
+    <property>
+        <name>fs.trash.checkpoint.interval</name>
+        <value>360</value>
+        <description>检查点之间的时间间隔, 此属性的值应该小于fs.trash.interval属性的值</description>
+    </property>
+    <property>
+        <name>fs.trash.interval</name>
+        <value>10080</value>
+        <description>检查点被删除的时间间隔, 单位为分钟</description>
+    </property>
+    <property>
+        <name>fs.permissions.umask-mode</name>
+        <value>022</value>
+        <description>创建文件或目录时的umask</description>
     </property>
 </configuration>
 ```
@@ -92,116 +142,184 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
 
 ```xml
 <configuration>
-    <!-- NameNode 数据存储目录 -->
     <property>
         <name>dfs.namenode.name.dir</name>
-        <value>file://${hadoop.tmp.dir}/name</value>
+        <value>file:${hadoop.tmp.dir}/name</value>
+        <description>NameNode 元数据存放位置,多个目录以逗号分隔</description>
     </property>
-    <!-- DataNode 数据存储目录，多个目录则用,分割 -->
-    <property>
-        <name>dfs.datanode.data.dir</name>
-        <value>/data01/hdfs</value>
-    </property>
-    <!-- JournalNode 数据存储目录 -->
     <property>
         <name>dfs.journalnode.edits.dir</name>
         <value>${hadoop.tmp.dir}/journalnode</value>
+        <description>JournalNode 数据存储目录</description>
     </property>
-    
-    <!-- blocksize 数据块大小128M -->
     <property>
-    	<name>dfs.blocksize</name>
+        <name>dfs.datanode.data.dir</name>
+        <value>/data01/hdfs</value>
+        <description>DataNode 数据存储目录，多个目录则用,分割</description>
+    </property>
+
+    <property>
+        <name>dfs.blocksize</name>
         <value>134217728</value>
+        <description>blocksize 数据块大小128M</description>
     </property>
-    <!-- datanode进行传输数据的最大线程数 -->
-    <property>
-        <name>dfs.datanode.max.transfer.threads</name>
-        <value>4096</value>
-    </property>
-    <!-- 数据副本数量 -->
     <property>
         <name>dfs.replication</name>
         <value>2</value>
+        <description>数据副本数量</description>
     </property>
-    
-    <!-- 集群内部通信名称 -->
+    <property>
+        <name>dfs.datanode.max.transfer.threads</name>
+        <value>4096</value>
+        <description>datanode进行传输数据的最大线程数</description>
+    </property>
+    <property>
+        <name>dfs.datanode.failed.volumes.tolerated</name>
+        <value>1</value>
+        <description>决定停止数据节点提供服务允许卷的出错次数, 0则表示任何卷出错都要停止数据节点</description>
+    </property>
+
+    <property>
+        <name>dfs.permissions.superusergroup</name>
+        <value>hadoop</value>
+        <description>超级用户用户组</description>
+    </property>
+
     <property>
         <name>dfs.internal.nameservices</name>
         <value>hadoopcluster</value>
+        <description>集群内部通信名称</description>
     </property>
-    <!-- 完全分布式集群名称 -->
     <property>
         <name>dfs.nameservices</name>
         <value>hadoopcluster</value>
+        <description>完全分布式集群名称</description>
     </property>
-    <!-- 集群中 NameNode 节点都有哪些 -->
     <property>
         <name>dfs.ha.namenodes.hadoopcluster</name>
         <value>nn1,nn2</value>
+        <description>集群中 NameNode 节点都有哪些</description>
     </property>
-    
-    <!-- NameNode 的 RPC 通信地址 -->
     <property>
         <name>dfs.namenode.rpc-address.hadoopcluster.nn1</name>
-        <value>hadoop1:53310</value>
+        <value>hadoop1:54310</value>
+        <description>NameNode 的 RPC 通信地址(客户端连接使用)</description>
     </property>
     <property>
-        <name>dfs.namenode.rpc-address.hadoopcluster.nn2</name>
-        <value>hadoop3:53310</value>
+        <name>dfs.namenode.servicerpc-address.hadoopcluster.nn1</name>
+        <value>hadoop1:53310</value>
+        <description>NameNode 的 RPC 通信地址(DataNode等内部服务连接使用,为空则与rpc-address地址相同)</description>
     </property>
-    
-    <!-- 	
-		语法格式: "dfs.namenode.rpc-address.[nameservice ID].[namenode ID]"
-		NameNode 的 http 通信地址 
-	-->
     <property>
         <name>dfs.namenode.http-address.hadoopcluster.nn1</name>
         <value>hadoop1:50070</value>
+        <description>NameNode 的 RPC 通信地址</description>
+        <description>
+            NameNode 的 http 通信地址
+            语法格式: "dfs.namenode.rpc-address.[nameservice ID].[namenode ID]"
+        </description>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.hadoopcluster.nn1</name>
+        <value>hadoop1:54310</value>
+        <description>NameNode 的 RPC 通信地址</description>
+    </property>
+    <property>
+        <name>dfs.namenode.servicerpc-address.hadoopcluster.nn1</name>
+        <value>hadoop1:53310</value>
     </property>
     <property>
         <name>dfs.namenode.http-address.hadoopcluster.nn2</name>
         <value>hadoop3:50070</value>
+        <description>
+            NameNode 的 http 通信地址
+            语法格式: "dfs.namenode.rpc-address.[nameservice ID].[namenode ID]"
+        </description>
     </property>
-    
-    <!-- 指定 NameNode 元数据在 JournalNode 上的存放位置 -->
+
     <property>
         <name>dfs.namenode.shared.edits.dir</name>
         <value>qjournal://hadoop1:8485;hadoop2:8485;hadoop3:8485/hadoopcluster</value>
+        <description>指定 NameNode 元数据在 JournalNode 上的存放位置 </description>
     </property>
     <property>
-    	<name>dfs.journalnode.rpc-address</name>
-    	<value>0.0.0.0:8485</value>
-  	</property>
- 	<property>
-    	<name>dfs.journalnode.http-address</name>
-    	<value>0.0.0.0:8480</value>
-  	</property>
-    
-    <!-- 访问代理类：client 用于确定哪个 NameNode 为 Active -->
-    <property>
-        <name>dfs.client.failover.proxy.provider.hadoopcluster</name>
-        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+        <name>dfs.journalnode.rpc-address</name>
+        <value>0.0.0.0:8485</value>
+        <description>JournalNode RPC地址</description>
     </property>
-    <!-- 配置隔离机制，即同一时刻只能有一台服务器对外响应 -->
     <property>
-        <name>dfs.ha.fencing.methods</name>
-        <value>sshfence(hdfs:22)
-           shell(/bin/true)</value>
+        <name>dfs.journalnode.http-address</name>
+        <value>0.0.0.0:8480</value>
+        <description>JournalNode HTTP地址</description>
     </property>
-    <!-- 使用隔离机制时需要 ssh 秘钥登录-->
-    <property>
-        <name>dfs.ha.fencing.ssh.private-key-files</name>
-        <value>/root/.ssh/id_rsa</value>
-    </property>
-    <!-- 启用 nn 故障自动转移 -->
+
     <property>
         <name>dfs.ha.automatic-failover.enabled</name>
         <value>true</value>
+        <description>启用 nn 故障自动转移</description>
     </property>
     <property>
-     	<name>dfs.permissions.enabled</name>
-     	<value>false</value>
-  	</property>
+        <name>dfs.client.failover.proxy.provider.hadoopcluster</name>
+        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+        <description>访问代理类:client 用于确定哪个 NameNode 为 Active</description>
+    </property>
+
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>sshfence(hdfs:22)
+            shell(/bin/true)
+        </value>
+        <description>配置隔离机制，即同一时刻只能有一台服务器对外响应</description>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/root/.ssh/id_rsa</value>
+        <description>使用隔离机制时需要 ssh 秘钥登录</description>
+    </property>
+
+    <property>
+        <name>dfs.permissions.enabled</name>
+        <value>true</value>
+        <description>HDFS中是否启用权限检查</description>
+    </property>
+
+    <property>
+        <name>dfs.namenode.handler.count</name>
+        <value>10</value>
+    </property>
+    <property>
+        <name>dfs.datanode.handler.count</name>
+        <value>10</value>
+    </property>
+    <property>
+        <name>dfs.namenode.service.handler.count</name>
+        <value>10</value>
+    </property>
+
+    <property>
+        <name>dfs.webhdfs.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>dfs.namenode.acls.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>dfs.namenode.audit.log.async</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>dfs.qjournal.write-txns.timeout.ms</name>
+        <value>120000</value>
+    </property>
+    <property>
+        <name>dfs.cluster.administrators</name>
+        <value>hdfs</value>
+    </property>
+    <property>
+        <name>dfs.client.socket-timeout</name>
+        <value>180000</value>
+    </property>
 </configuration>
 ```
 ### 4. 配置yarn-site.xml
@@ -209,112 +327,218 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
 ```xml
 <configuration>
     <property>
-        <name>yarn.nodemanager.aux-services</name>
-        <value>mapreduce_shuffle</value>
+        <name>yarn.resourcemanager.recovery.enabled</name>
+        <value>true</value>
+        <description>启用自动恢复</description>
     </property>
     <property>
-      	<name>yarn.nodemanager.aux-services.mapreduce_shuffle.class</name>
-      	<value>org.apache.hadoop.mapred.ShuffleHandler</value>
+        <name>yarn.resourcemanager.store.class</name>
+        <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
+        <description>指定 resourcemanager 的状态信息存储在 zookeeper 集群</description>
     </property>
-    
-    <!-- 启用 resourcemanager ha -->
+
+    <property>
+        <name>yarn.resourcemanager.zk-address</name>
+        <value>hadoop1:2181,hadoop2:2181,hadoop3:2181</value>
+        <description>指定 zookeeper 集群的地址</description>
+    </property>
     <property>
         <name>yarn.resourcemanager.ha.enabled</name>
         <value>true</value>
+        <description>启用 resourcemanager ha</description>
     </property>
-    <!-- 声明两台 resourcemanager 的地址 -->
+
     <property>
         <name>yarn.resourcemanager.cluster-id</name>
         <value>rm</value>
+        <description>声明两台 resourcemanager 的地址</description>
     </property>
-    <!--指定 resourcemanager 的逻辑列表-->
+
     <property>
         <name>yarn.resourcemanager.ha.rm-ids</name>
         <value>rm1,rm2</value>
+        <description>指定 resourcemanager 的逻辑列表</description>
     </property>
+
     <!-- ========== rm1 的配置 ========== -->
-    <!-- 指定 rm1 的主机名 -->
     <property>
         <name>yarn.resourcemanager.hostname.rm1</name>
         <value>hadoop1</value>
+        <description>指定 rm1 的主机名</description>
     </property>
-    <!-- 指定 rm1 的 web 端地址 -->
     <property>
         <name>yarn.resourcemanager.webapp.address.rm1</name>
         <value>hadoop1:8088</value>
+        <description>指定 rm1 的 web 端地址</description>
     </property>
-    <!-- 指定 rm1 的内部通信地址 -->
     <property>
         <name>yarn.resourcemanager.address.rm1</name>
         <value>hadoop1:8032</value>
+        <description>指定 rm1 的内部通信地址</description>
     </property>
-    <!-- 指定 AM(Application Master) 向 rm1 申请资源的地址 -->
     <property>
         <name>yarn.resourcemanager.scheduler.address.rm1</name>
         <value>hadoop1:8030</value>
+        <description>指定 AM(Application Master) 向 rm1 申请资源的地址</description>
     </property>
-    <!-- 指定供 NM 连接的地址 -->
     <property>
         <name>yarn.resourcemanager.resource-tracker.address.rm1</name>
         <value>hadoop1:8031</value>
+        <description>指定供 NM 连接的地址</description>
     </property>
+
     <!-- ========== rm2 的配置 ========== -->
     <property>
         <name>yarn.resourcemanager.hostname.rm2</name>
         <value>hadoop2</value>
+        <description>指定 rm2 的主机名</description>
     </property>
     <property>
         <name>yarn.resourcemanager.webapp.address.rm2</name>
         <value>hadoop2:8088</value>
+        <description>指定 rm2 的 web 端地址</description>
     </property>
     <property>
         <name>yarn.resourcemanager.address.rm2</name>
         <value>hadoop2:8032</value>
+        <description>指定 rm2 的内部通信地址</description>
     </property>
     <property>
         <name>yarn.resourcemanager.scheduler.address.rm2</name>
         <value>hadoop2:8030</value>
+        <description>指定 AM(Application Master) 向 rm2 申请资源的地址</description>
     </property>
     <property>
         <name>yarn.resourcemanager.resource-tracker.address.rm2</name>
         <value>hadoop2:8031</value>
+        <description>指定供 NM 连接的地址</description>
     </property>
-    <!-- 指定 zookeeper 集群的地址 -->
+
     <property>
-        <name>yarn.resourcemanager.zk-address</name>
-        <value>hadoop1:2181,hadoop2:2181,hadoop3:2181</value>
+        <name>yarn.nodemanager.address</name>
+        <value>0.0.0.0:45454</value>
     </property>
-    <!-- 启用自动恢复 -->
+
     <property>
-        <name>yarn.resourcemanager.recovery.enabled</name>
-        <value>true</value>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle,spark_shuffle</value>
+        <description></description>
     </property>
-    <!-- 指定 resourcemanager 的状态信息存储在 zookeeper 集群 -->
     <property>
-        <name>yarn.resourcemanager.store.class</name>
-        <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
+        <name>yarn.nodemanager.aux-services.mapreduce_shuffle.class</name>
+        <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+        <description></description>
     </property>
-    <!-- 开启日志聚集功能 -->
+    <property>
+        <name>yarn.nodemanager.aux-services.spark_shuffle.class</name>
+        <value>org.apache.spark.network.yarn.YarnShuffleService</value>
+    </property>
+
     <property>
         <name>yarn.log-aggregation-enable</name>
         <value>true</value>
+        <description>开启日志聚集功能</description>
     </property>
-    <!-- 设置日志聚集服务器地址 -->
     <property>
         <name>yarn.log.server.url</name>
         <value>http://bigdata03:19888/jobhistory/logs</value>
+        <description>设置日志聚集服务器地址</description>
     </property>
-    <!-- 设置日志保留时间为 7 天 -->
+    <property>
+        <name>yarn.nodemanager.log.retain-seconds</name>
+        <value>604800</value>
+    </property>
     <property>
         <name>yarn.log-aggregation.retain-seconds</name>
         <value>604800</value>
+        <description>设置日志保留时间为 7 天</description>
     </property>
-    <!-- 环境变量的继承 -->
+
+    <property>
+        <description>Where to aggregate logs to.(hdfs)</description>
+        <name>yarn.nodemanager.remote-app-log-dir</name>
+        <value>/yarn/apps</value>
+    </property>
+    <property>
+        <description>Where to aggregate logs to.</description>
+        <name>yarn.nodemanager.remote-app-log-dir-suffix</name>
+        <value>logs</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.local-dirs</name>
+        <value>${hadoop.tmp.dir}/nm-local-dir</value>
+        <description>设置datanode节点存储数据文件的本地路径</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.log-dirs</name>
+        <value>${yarn.log.dir}/userlogs</value>
+        <description>namenode元数据存放位置</description>
+    </property>
+    <property>
+        <name>yarn.application.classpath</name>
+        <value>
+            /etc/hadoop/conf,/usr/local/hadoop3/share/hadoop/mapreduce/*,/usr/local/hadoop3/share/hadoop/mapreduce/lib/*,/usr/local/hadoop3/share/hadoop/common/*,/usr/local/hadoop3/share/hadoop/common/lib/*,/usr/local/hadoop3/share/hadoop/yarn/*,/usr/local/hadoop3/share/hadoop/yarn/lib/*,/usr/local/hadoop3/share/hadoop/hdfs/*,/usr/local/hadoop3/share/hadoop/hdfs/lib/*,/usr/lib/hadoop/lib/*</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.scheduler.class</name>
+        <value>org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.resource.memory-mb</name>
+        <value>4096</value>
+        <description>为容器分配的物理内存量（以MB为单位），默认为8192MB。</description>
+    </property>
+    <property>
+        <name>yarn.scheduler.minimum-allocation-mb</name>
+        <value>1024</value>
+        <description>在RM（资源管理器）中，每个容器请求的最小分配为MB。低于此值的内存请求将被设置为该属性的值。此外，配置为具有低于此值的内存的节点管理器将被资源管理器关闭。</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.vmem-check-enabled</name>
+        <value>false</value>
+        <description>是否会对容器强制执行虚拟内存限制。</description>
+    </property>
+    <property>
+        <name>yarn.scheduler.maximum-allocation-mb</name>
+        <value>4096</value>
+        <description>在RM中，每个容器请求的最大分配为MB。内存请求超过这个值将抛出InvalidResourceRequestException异常。</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.resource.cpu-vcores</name>
+        <value>8</value>
+        <description>容器可分配的vcore数量。资源管理器调度器在为容器分配资源时使用此数量。这不会用于限制YARN容器使用的CPU数量。在其他情况下，vcore数量默认为8。</description>
+    </property>
+    <property>
+        <name>yarn.scheduler.minimum-allocation-vcores</name>
+        <value>1</value>
+        <description>
+            在RM中，每个容器请求的最低分配是以虚拟CPU核心为单位的。低于此值的请求将被设置为该属性的值。此外，配置为具有比此值更少虚拟核心的节点管理器将由资源管理器关闭。</description>
+    </property>
+    <property>
+        <name>yarn.scheduler.maximum-allocation-vcores</name>
+        <value>8</value>
+        <description>在RM（资源管理器）中，每个容器请求的虚拟CPU核心的最大分配。高于此值的请求将抛出InvalidResourceRequestException异常。</description>
+    </property>
+
+    <property>
+        <name>yarn.acl.enable</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.webapp.cross-origin.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.log-aggregation.compression-type</name>
+        <value>gz</value>
+    </property>
+
     <property>
         <name>yarn.nodemanager.env-whitelist</name>
         <value>
             JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_HOME,PATH,LANG,TZ,HADOOP_MAPRED_HOME
         </value>
+        <description>环境变量的继承</description>
     </property>
 </configuration>
 ```
@@ -324,14 +548,15 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
 ```xml
 <configuration>
 	<property>
-		<!-- 声明MapReduce框架在YARN上运行 -->
 		<name>mapreduce.framework.name</name>
 		<value>yarn</value>
+        <description>声明MapReduce框架在YARN上运行</description>
 	</property>
-	<!-- 设置环境变量，多个值用逗号分隔，也可以在mapreduce程序中通过-Dyarn.app.mapreduce.am.env.HADOOP_MAPRED_HOME=XXX来设置 -->
+    
     <property>
       <name>yarn.app.mapreduce.am.env</name>
       <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
+      <description>设置环境变量，多个值用逗号分隔，也可以在mapreduce程序中通过-Dyarn.app.mapreduce.am.env.HADOOP_MAPRED_HOME=XXX来设置</description>
     </property>
     <property>
       <name>mapreduce.map.env</name>
@@ -341,15 +566,37 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
       <name>mapreduce.reduce.env</name>
       <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
     </property>  
-    <!-- 历史服务器端地址 -->
+
     <property>
         <name>mapreduce.jobhistory.address</name>
         <value>bigdata03:10020</value>
+        <description>历史服务器端地址</description>
     </property>
-    <!-- 历史服务器 web 端地址 -->
+
     <property>
         <name>mapreduce.jobhistory.webapp.address</name>
         <value>bigdata03:19888</value>
+        <description>历史服务器 web 端地址</description>
+    </property>
+    <property>
+        <name>yarn.app.mapreduce.am.log.level</name>
+        <value>INFO</value>
+        <description>MR ApplicationMaster 的日志记录级别</description>
+    </property>
+    <property>
+        <name>mapreduce.reduce.log.level</name>
+        <value>INFO</value>
+        <description>日志级别</description>
+    </property>
+    <property>
+        <name>mapreduce.map.log.level</name>
+        <value>INFO</value>
+        <description>Map端日志级别 </description>
+    </property>
+    <property>
+        <name>mapreduce.output.fileoutputformat.compress.codec</name>
+        <value>org.apache.hadoop.io.compress.SnappyCodec</value>
+        <description>设置mapreduce最终数据输出压缩为snappy压缩</description>
     </property>
 </configuration>
 ```
@@ -596,13 +843,13 @@ echo "123456" | sudo passwd --stdin mapred
 
 ### 2. Hadoop集群目录权限调整
 
-1. 创建日志目录
+1. **创建日志目录**
 
    ```bash
    mkdir -p /var/log/hadoop/hadoop-hdfs /var/log/hadoop/hadoop-yarn /var/log/hadoop/hadoop-mapred
    ```
 
-2. 为日志目录赋权
+2. **为日志目录赋权**
 
    ```bash
    chown -R yarn:hadoop /var/log/hadoop/hadoop-yarn 
@@ -611,7 +858,7 @@ echo "123456" | sudo passwd --stdin mapred
    chmod -R 755 /var/log/hadoop/*
    ```
 
-3. 数据目录权限调整
+3. **数据目录权限调整**
 
    ```bash
    # master节点
@@ -623,179 +870,285 @@ echo "123456" | sudo passwd --stdin mapred
    chmod -R 755 /data01/hdfs
    ```
 
-### 3. 配置core-site.xml
+### 3. 创建Hadoop服务Kerberos主体
+
+1. **创建主体(Principal)**
+
+   ```bash
+   kadmin.local:  addprinc -pw 123456 hdfs/bigdata01@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 hdfs/bigdata02@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 hdfs/bigdata03@HADOOP.COM
+   
+   kadmin.local:  addprinc -pw 123456 yarn/bigdata01@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 yarn/bigdata02@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 yarn/bigdata03@HADOOP.COM
+   
+   kadmin.local:  addprinc -pw 123456 mapred/bigdata01@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 mapred/bigdata02@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 mapred/bigdata03@HADOOP.COM
+   ```
+
+2. **生成keytab文件**
+
+   ```bash
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/hdfs.keytab  hdfs/bigdata01@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/hdfs.keytab  hdfs/bigdata02@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/hdfs.keytab  hdfs/bigdata03@HADOOP.COM
+   
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/yarn.keytab  yarn/bigdata01@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/yarn.keytab  yarn/bigdata02@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/yarn.keytab  yarn/bigdata03@HADOOP.COM
+   
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/mapred.keytab  mapred/bigdata01@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/mapred.keytab  mapred/bigdata02@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/mapred.keytab  mapred/bigdata03@HADOOP.COM
+   ```
+
+3. **分发keytab文件**
+
+   ```bash
+   ssh root@bigdata01 "mkdir -p /etc/security/keytab"
+   ssh root@bigdata02 "mkdir -p /etc/security/keytab"
+   ssh root@bigdata03 "mkdir -p /etc/security/keytab"
+   
+   chown -R root:root /etc/security/keytab
+   chmod -R 644 /etc/security/keytab
+   
+   scp /var/kerberos/krb5kdc/keytab/hdfs.keytab root@bigdata01:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/yarn.keytab root@bigdata01:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/mapred.keytab root@bigdata01:/etc/security/keytab
+   
+   scp /var/kerberos/krb5kdc/keytab/hdfs.keytab root@bigdata02:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/yarn.keytab root@bigdata02:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/mapred.keytab root@bigdata02:/etc/security/keytab
+   
+   scp /var/kerberos/krb5kdc/keytab/hdfs.keytab root@bigdata03:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/yarn.keytab root@bigdata03:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/mapred.keytab root@bigdata03:/etc/security/keytab
+   ```
+
+### 4. 配置core-site.xml
 
 ```xml
-<!--启用Kerberos安全认证-->
-<property>
-  <name>hadoop.security.authentication</name>
-  <value>kerberos</value>
-  <description>Possible values are simple (no authentication), and kerberos</description>
-</property>
-<!--启用Hadoop集群授权管理-->
-<property>
-  <name>hadoop.security.authorization</name>
-  <value>true</value>
-  <description>Is service-level authorization enabled?</description>
-</property>
-<!--Kerberos主体到Hadoop用户的具体映射规则-->
-<property>
-  <name>hadoop.security.auth_to_local</name>
-  <value></value>
-  <description>Maps kerberos principals to local user names</description>
-</property>
-<!--外部系统用户身份映射到Hadoop用户的机制-->
-<property>
-  <name>hadoop.security.auth_to_local.mechanism</name>
-  <value>hadoop</value>
-  <description>The mechanism by which auth_to_local rules are evaluated.
-    If set to 'hadoop' it will not allow resulting local user names to have
-    either '@' or '/'. If set to 'MIT' it will follow MIT evaluation rules
-    and the restrictions of 'hadoop' do not apply.</description>
-</property>
+<configuration>
+    <property>
+        <name>hadoop.security.authentication</name>
+        <value>kerberos</value>
+        <description>启用Kerberos安全认证</description>
+    </property>
+    <property>
+        <name>hadoop.security.authorization</name>
+        <value>true</value>
+        <description>是否启用service级别的授权</description>
+    </property>
+    <property>
+        <name>hadoop.security.auth_to_local</name>
+        <value>
+            RULE:[2:$1/$2@$0]([ndj]n/.*@HADOOP.COM)s/.*/hdfs/
+            RULE:[2:$1/$2@$0]([rn]m/.*@HADOOP.COM)s/.*/yarn/
+            RULE:[2:$1/$2@$0](jhs/.*@HADOOP.COM)s/.*/mapred/
+            DEFAULT
+        </value>
+        <description>
+            Kerberos主体到Hadoop操作系统用户的具体映射规则
+            "$0"表示域，"$1"表示服务主体名称中的第一部分,"$2"表示第二部分。
+        </description>
+    </property>
+    <property>
+        <name>hadoop.security.auth_to_local.mechanism</name>
+        <value>MIT</value>
+        <description>外部系统用户身份映射到Hadoop用户的机制</description>
+    </property>
+    <property>
+        <name>hadoop.rpc.protection</name>
+        <value>authentication</value>
+        <description>
+            Hadoop集群间RPC通讯设为仅认证模式
+            此参数指定保护级别，有三种可能,分别为
+            authentication(默认值，表示仅客户端/服务器相互认值),
+            integrity(表示保证数据的完整性并进行身份验证),
+            privacy(进行身份验证并保护数据完整性，并且还加密在客户端与服务器之间传输的数据)
+        </description>
+    </property>
+    <property>
+        <name>hadoop.kerberos.kinit.command</name>
+        <value>/usr/bin/kinit</value>
+        <description>用于Kerberos证书的定时更新</description>
+    </property>
+</configuration>
 ```
 
-### 4. 配置hdfs-site.xml
+### 5. 配置hdfs-site.xml
 
 ```xml
-<!-- 使用隔离机制时需要 ssh 秘钥登录-->
-<property>
-  <name>dfs.ha.fencing.ssh.private-key-files</name>
-  <value>/home/hdfs/.ssh/id_rsa</value>
-</property>
-<!--开启访问DataNode数据库需要Kerberos认证-->
-<property>
-  <name>dfs.block.access.token.enable</name>
-  <value>true</value>
-</property>
-<!--NameNode服务的Kerberos主体-->
-<property>
-  <name>dfs.namenode.kerberos.principal</name>
-  <value>hdfs/_HOST@HADOOP.COM</value>
-</property>
-<!--NameNode服务的keytab文件位置-->
-<property>
-  <name>dfs.namenode.keytab.file</name>
-  <value>/etc/security/keytab/hdfs.keytab</value>
-</property>
-<!--DataNode服务的Kerberos主体-->
-<property>
-  <name>dfs.datanode.kerberos.principal</name>
-  <value>hdfs/_HOST@HADOOP.COM</value>
-</property>
-<!--DataNode服务的keytab文件位置-->
-<property>
-  <name>dfs.datanode.keytab.file</name>
-  <value>/etc/security/keytab/hdfs.keytab</value>
-</property>
-<!--JournalNode服务的Kerberos主体-->
-<property>
-  <name>dfs.journalnode.kerberos.principal</name>
-  <value>hdfs/_HOST@HADOOP.COM</value>
-</property>
-<!--JournalNode服务的keytab文件位置-->
-<property>
-  <name>dfs.journalnode.keytab.file</name>
-  <value>/etc/security/keytab/hdfs.keytab</value>
-</property>
+<configuration>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/home/hdfs/.ssh/id_rsa</value>
+        <description>使用隔离机制时需要 ssh 秘钥登录</description>
+    </property>
 
-<!--JournalNode Web UI服务的Kerberos主体-->
-<property>
-  <name>dfs.journalnode.kerberos.internal.spnego.principal</name>
-  <value>HTTP/_HOST@HADOOP.COM</value>
-</property>
-<!--NameNode Web UI服务的Kerberos主体-->
-<property>
-  <name>dfs.namenode.kerberos.internal.spnego.principal</name>
-  <value>HTTP/_HOST@HADOOP.COM</value>
-</property>
-<!--HDFS Web UI服务的Kerberos主体-->
-<property>
-  <name>dfs.web.authentication.kerberos.principal</name>
-  <value>HTTP/_HOST@HADOOP.COM</value>
-</property>
-<!--HDFS Web UI服务的keytab文件位置-->
-<property>
-  <name>dfs.web.authentication.kerberos.keytab</name>
-  <value>/etc/security/keytab/hdfs.keytab</value>
-</property>
+    <property>
+        <name>dfs.block.access.token.enable</name>
+        <value>true</value>
+        <description>开启访问DataNode数据块需要Kerberos认证</description>
+    </property>
 
-<property>
-  <name>dfs.namenode.kerberos.principal.pattern</name>
-  <value>*</value>
-</property>
-<property>
-  <name>dfs.datanode.address</name>
-  <value>0.0.0.0:1004</value>
-</property>
-<property>
-  <name>dfs.datanode.http.address</name>
-  <value>0.0.0.0:1006</value>
-</property>
-<property>
-  <name>dfs.datanode.data.dir.perm</name>
-  <value>700</value>
-</property>
+    <property>
+        <name>dfs.namenode.kerberos.principal</name>
+        <value>hdfs/_HOST@HADOOP.COM</value>
+        <description>NameNode服务的Kerberos主体</description>
+    </property>
+    <property>
+        <name>dfs.namenode.keytab.file</name>
+        <value>/etc/security/keytab/hdfs.keytab</value>
+        <description>NameNode服务的keytab文件位置</description>
+    </property>
 
-<!--配置HDFS支持HTTPS协议-->
-<property>
-  <name>dfs.http.policy</name>
-  <value>HTTPS_ONLY</value>
-  <description>Decide if HTTPS(SSL) is supported on HDFS
-    This configures the HTTP endpoint for HDFS daemons:
-    The following values are supported:
-    - HTTP_ONLY : Service is provided only on http
-    - HTTPS_ONLY : Service is provided only on https
-    - HTTP_AND_HTTPS : Service is provided both on http and https
-  </description>
-</property>
+    <property>
+        <name>dfs.datanode.kerberos.principal</name>
+        <value>hdfs/_HOST@HADOOP.COM</value>
+        <description>DataNode服务的Kerberos主体</description>
+    </property>
+    <property>
+        <name>dfs.datanode.keytab.file</name>
+        <value>/etc/security/keytab/hdfs.keytab</value>
+        <description>DataNode服务的keytab文件位置</description>
+    </property>
 
-<!--配置DataNode数据传输保护策略为仅授权模式-->
-<property>
-  <name>dfs.data.transfer.protection</name>
-  <value>authentication</value>
-  <description>
-    A comma-separated list of SASL protection values used for secured
-    connections to the DataNode when reading or writing block data. Possible
-    values are authentication, integrity and privacy. authentication means
-    authentication only and no integrity or privacy; integrity implies
-    authentication and integrity are enabled; and privacy implies all of
-    authentication, integrity and privacy are enabled. If
-    dfs.encrypt.data.transfer is set to true, then it supersedes the setting for
-    dfs.data.transfer.protection and enforces that all connections must use a
-    specialized encrypted SASL handshake. This property is ignored for
-    connections to a DataNode listening on a privileged port. In this case, it
-    is assumed that the use of a privileged port establishes sufficient trust.
-  </description>
-</property>
+    <property>
+        <name>dfs.journalnode.kerberos.principal</name>
+        <value>hdfs/_HOST@HADOOP.COM</value>
+        <description>JournalNode服务的Kerberos主体</description>
+    </property>
+    <property>
+        <name>dfs.journalnode.keytab.file</name>
+        <value>/etc/security/keytab/hdfs.keytab</value>
+        <description>JournalNode服务的keytab文件位置</description>
+    </property>
+
+    <property>
+        <name>dfs.web.authentication.kerberos.principal</name>
+        <value>HTTP/_HOST@HADOOP.COM</value>
+        <description>HDFS Web UI服务的Kerberos主体</description>
+    </property>
+    <property>
+        <name>dfs.web.authentication.kerberos.keytab</name>
+        <value>/etc/security/keytab/hdfs.keytab</value>
+        <description>HDFS Web UI服务的keytab文件位置</description>
+    </property>
+
+    <property>
+        <name>dfs.namenode.kerberos.principal.pattern</name>
+        <value>*</value>
+        <description></description>
+    </property>
+
+    <property>
+        <name>dfs.datanode.data.dir.perm</name>
+        <value>700</value>
+        <description>DFS 数据节点存储其块的本地文件系统上目录的权限</description>
+    </property>
+
+    <property>
+        <name>dfs.http.policy</name>
+        <value>HTTPS_ONLY</value>
+        <description>
+            配置HDFS支持HTTPS协议
+            - HTTP_ONLY : Service is provided only on http
+            - HTTPS_ONLY : Service is provided only on https
+            - HTTP_AND_HTTPS : Service is provided both on http and https
+        </description>
+    </property>
+
+    <property>
+        <name>dfs.data.transfer.protection</name>
+        <value>authentication</value>
+        <description> 配置DataNode数据传输保护策略为仅授权模式 </description>
+    </property>
+</configuration>
 ```
 
-### 5. 配置yarn-site.xml
+### 6. 配置yarn-site.xml
 
 ```xml
- <!--ResourceManager服务的Kerberos主体-->
-<property>
-  <name>yarn.resourcemanager.principal</name>
-  <value>yarn/_HOST@HADOOP.COM</value>
-</property>
-<!--ResourceManager服务的keytab文件位置-->
-<property>
-  <name>yarn.resourcemanager.keytab</name>
-  <value>/etc/security/keytab/yarn.keytab</value>
-</property>
-<!--NodeManager服务的Kerberos主体-->
-<property>
-  <name>yarn.nodemanager.principal</name>
-  <value>yarn/_HOST@HADOOP.COM</value>
-</property>
-<!--NodeManager服务的keytab文件位置-->
-<property>
-  <name>yarn.nodemanager.keytab</name>
-  <value>/etc/security/keytab/yarn.keytab</value>
-</property>
+<configuration>
+    <property>
+        <name>yarn.resourcemanager.principal</name>
+        <value>yarn/_HOST@HADOOP.COM</value>
+        <description>ResourceManager服务的Kerberos主体</description>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.keytab</name>
+        <value>/etc/security/keytab/yarn.keytab</value>
+        <description>ResourceManager服务的keytab文件位置</description>
+    </property>
+
+    <property>
+        <name>yarn.nodemanager.principal</name>
+        <value>yarn/_HOST@HADOOP.COM</value>
+        <description>NodeManager服务的Kerberos主体</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.keytab</name>
+        <value>/etc/security/keytab/yarn.keytab</value>
+        <description>NodeManager服务的keytab文件位置</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.container-executor.class</name>
+        <value>org.apache.hadoop.yarn.server.nodemanager.LinuxContainerExecutor</value>
+    </property>
+  	<property>
+    	<name>yarn.nodemanager.linux-container-executor.group</name>
+    	<value>hadoop</value>
+  	</property>
+    <property>
+        <name>yarn.nodemanager.linux-container-executor.nonsecure-mode.local-user</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.linux-container-executor.nonsecure-mode.limit-users</name>
+        <value>false</value>
+    </property>
+</configuration>
 ```
 
+### 7. 配置mapred-site.xml 
 
+```xml
+<configuration>
+    <property>
+        <name>mapreduce.jobtracker.kerberos.principal</name>
+        <value>mapred/_HOST@HADOOP.COM</value>
+        <description>集群Kerberos realm配置</description>
+    </property>
+    <property>
+        <name>mapreduce.jobtracker.keytab.file</name>
+        <value>/etc/security/keytabs/mapred.keytab</value>
+        <description>Jobtracker的kerberos文件的位置</description>
+    </property>
+
+    <property>
+        <name>mapreduce.tasktracker.kerberos.principal</name>
+        <value>mapred/_HOST@HADOOP.COM</value>
+    </property>
+    <property>
+        <name>mapreduce.tasktracker.keytab.file</name>
+        <value>/etc/security/keytabs/mapred.keytab</value>
+        <description>Tasktracker的kerberos文件的位置</description>
+    </property>
+    
+    <property>
+        <name>mapreduce.jobhistory.principal</name>
+        <value>mapred/_HOST@HADOOP.COM</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.keytab</name>
+        <value>/etc/security/keytabs/mapred.keytab</value>
+        <description>JobHistory的kerberos文件的位置</description>
+    </property>
+</configuration>
+```
 
 
 
