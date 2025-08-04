@@ -220,17 +220,17 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
         </description>
     </property>
     <property>
-        <name>dfs.namenode.rpc-address.hadoopcluster.nn1</name>
-        <value>hadoop1:54310</value>
+        <name>dfs.namenode.rpc-address.hadoopcluster.nn2</name>
+        <value>hadoop2:54310</value>
         <description>NameNode 的 RPC 通信地址</description>
     </property>
     <property>
-        <name>dfs.namenode.servicerpc-address.hadoopcluster.nn1</name>
-        <value>hadoop1:53310</value>
+        <name>dfs.namenode.servicerpc-address.hadoopcluster.nn2</name>
+        <value>hadoop2:53310</value>
     </property>
     <property>
         <name>dfs.namenode.http-address.hadoopcluster.nn2</name>
-        <value>hadoop3:50070</value>
+        <value>hadoop2:50070</value>
         <description>
             NameNode 的 http 通信地址
             语法格式: "dfs.namenode.rpc-address.[nameservice ID].[namenode ID]"
@@ -617,7 +617,7 @@ hadoop3
 在每个`Zookeeper`节点上启动`Zookeeper`
 
 ```bash
-bin/zkServer.sh start
+cd /usr/local/zookeeper/ && bin/zkServer.sh start
 bin/zkServer.sh status
 ```
 
