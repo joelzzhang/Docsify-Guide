@@ -164,9 +164,25 @@ java -version
   > - **keypass (密钥密码)** ：用于保护密钥库中存储的 **单个密钥** 的密码。它用来加密和解密每个密钥。
   > - **storepass (存储库密码)** ：用于保护整个 **密钥库文件** 的密码。它用来加密和解密整个密钥库文件，并保护其内容不被未授权访问。
 
-- `-genseckey`：生成密钥
+- `-genseckey`：生成密钥，可用选项：
 
-  
+  ```ini
+   -alias <alias>          要处理的条目的别名
+   -keypass <arg>          密钥口令
+   -keyalg <alg>           密钥算法名称
+   -keysize <size>         密钥位大小
+   -keystore <keystore>    密钥库名称
+   -storepass <arg>        密钥库口令
+   -storetype <type>       密钥库类型
+   -providername <name>    提供方名称
+   -addprovider <name>     按名称 (例如 SunPKCS11) 添加安全提供方
+     [-providerarg <arg>]    配置 -addprovider 的参数
+   -providerclass <class>  按全限定类名添加安全提供方
+     [-providerarg <arg>]    配置 -providerclass 的参数
+   -providerpath <list>    提供方类路径
+   -v                      详细输出
+   -protected              通过受保护的机制的口令
+  ```
 
 - `-importcert`：导入证书或证书链，可用选项：
 

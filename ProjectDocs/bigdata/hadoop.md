@@ -200,6 +200,7 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
         <value>nn1,nn2</value>
         <description>集群中 NameNode 节点都有哪些</description>
     </property>
+    <!-- ========== nn1 的配置 ========== -->
     <property>
         <name>dfs.namenode.rpc-address.hadoopcluster.nn1</name>
         <value>hadoop1:54310</value>
@@ -219,6 +220,7 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
             语法格式: "dfs.namenode.rpc-address.[nameservice ID].[namenode ID]"
         </description>
     </property>
+    <!-- ========== nn2 的配置 ========== -->
     <property>
         <name>dfs.namenode.rpc-address.hadoopcluster.nn2</name>
         <value>hadoop2:54310</value>
@@ -878,14 +880,22 @@ echo "123456" | sudo passwd --stdin mapred
    kadmin.local:  addprinc -pw 123456 hdfs/bigdata01@HADOOP.COM
    kadmin.local:  addprinc -pw 123456 hdfs/bigdata02@HADOOP.COM
    kadmin.local:  addprinc -pw 123456 hdfs/bigdata03@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 hdfs/bigdata04@HADOOP.COM
    
    kadmin.local:  addprinc -pw 123456 yarn/bigdata01@HADOOP.COM
    kadmin.local:  addprinc -pw 123456 yarn/bigdata02@HADOOP.COM
    kadmin.local:  addprinc -pw 123456 yarn/bigdata03@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 yarn/bigdata04@HADOOP.COM
    
    kadmin.local:  addprinc -pw 123456 mapred/bigdata01@HADOOP.COM
    kadmin.local:  addprinc -pw 123456 mapred/bigdata02@HADOOP.COM
    kadmin.local:  addprinc -pw 123456 mapred/bigdata03@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 mapred/bigdata04@HADOOP.COM
+   
+   kadmin.local:  addprinc -pw 123456 HTTP/bigdata01@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 HTTP/bigdata02@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 HTTP/bigdata03@HADOOP.COM
+   kadmin.local:  addprinc -pw 123456 HTTP/bigdata04@HADOOP.COM
    ```
 
 2. **生成keytab文件**
@@ -894,14 +904,22 @@ echo "123456" | sudo passwd --stdin mapred
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/hdfs.keytab  hdfs/bigdata01@HADOOP.COM
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/hdfs.keytab  hdfs/bigdata02@HADOOP.COM
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/hdfs.keytab  hdfs/bigdata03@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/hdfs.keytab  hdfs/bigdata04@HADOOP.COM
    
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/yarn.keytab  yarn/bigdata01@HADOOP.COM
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/yarn.keytab  yarn/bigdata02@HADOOP.COM
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/yarn.keytab  yarn/bigdata03@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/yarn.keytab  yarn/bigdata04@HADOOP.COM
    
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/mapred.keytab  mapred/bigdata01@HADOOP.COM
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/mapred.keytab  mapred/bigdata02@HADOOP.COM
    kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/mapred.keytab  mapred/bigdata03@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/mapred.keytab  mapred/bigdata04@HADOOP.COM
+   
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/HTTP.keytab  HTTP/bigdata01@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/HTTP.keytab  HTTP/bigdata02@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/HTTP.keytab  HTTP/bigdata03@HADOOP.COM
+   kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/HTTP.keytab  HTTP/bigdata04@HADOOP.COM
    ```
 
 3. **分发keytab文件**
@@ -912,19 +930,22 @@ echo "123456" | sudo passwd --stdin mapred
    ssh root@bigdata03 "mkdir -p /etc/security/keytab"
    
    chown -R root:root /etc/security/keytab
-   chmod -R 644 /etc/security/keytab
+   chmod -R 755 /etc/security/keytab
    
    scp /var/kerberos/krb5kdc/keytab/hdfs.keytab root@bigdata01:/etc/security/keytab
    scp /var/kerberos/krb5kdc/keytab/yarn.keytab root@bigdata01:/etc/security/keytab
    scp /var/kerberos/krb5kdc/keytab/mapred.keytab root@bigdata01:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/HTTP.keytab root@bigdata01:/etc/security/keytab
    
    scp /var/kerberos/krb5kdc/keytab/hdfs.keytab root@bigdata02:/etc/security/keytab
    scp /var/kerberos/krb5kdc/keytab/yarn.keytab root@bigdata02:/etc/security/keytab
    scp /var/kerberos/krb5kdc/keytab/mapred.keytab root@bigdata02:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/HTTP.keytab root@bigdata01:/etc/security/keytab
    
    scp /var/kerberos/krb5kdc/keytab/hdfs.keytab root@bigdata03:/etc/security/keytab
    scp /var/kerberos/krb5kdc/keytab/yarn.keytab root@bigdata03:/etc/security/keytab
    scp /var/kerberos/krb5kdc/keytab/mapred.keytab root@bigdata03:/etc/security/keytab
+   scp /var/kerberos/krb5kdc/keytab/HTTP.keytab root@bigdata01:/etc/security/keytab
    ```
 
 ### 4. 配置core-site.xml
@@ -1066,6 +1087,119 @@ echo "123456" | sudo passwd --stdin mapred
         <value>authentication</value>
         <description> 配置DataNode数据传输保护策略为仅授权模式 </description>
     </property>
+</configuration>
+```
+
+> 由于 DataNode 数据传输协议不是使用 Hadoop RPC ，因此 DataNode 必须使用 dfs.datanode.address 和 dfs.datanode.http.address 指定的特权端口进行身份验证。此身份验证基于攻击者无法获得 DataNode 主机上的 root 权限的假设。
+>
+> 当以 root 身份执行 hdfs datanode 命令时，服务器进程首先绑定特权端口，然后放弃权限并以 HDFS_DATANODE_SECURE_USER 指定的用户帐户运行。此启动过程使用安装[的 jsvc 程序 ](https://commons.apache.org/proper/commons-daemon/jsvc.html) 来 JSVC_HOME。您必须在启动时（在 hadoop-env.sh 中 ）将 HDFS_DATANODE_SECURE_USER 和 JSVC_HOME 指定 为环境变量。
+>
+> 从 2.6.0 版开始，SASL 可用于验证数据传输协议。在此配置中，安全集群不再需要使用 jsvc 以 root 身份启动 DataNode 并绑定到特权端口。要在数据传输协议上启用 SASL，请在 hdfs-site.xml 中设置 dfs.data.transfer.protection，为 dfs.datanode.address 设置非特权端口，将 dfs.http.policy 设置为 HTTPS_ONLY，并确保未定义 HDFS_DATANODE_SECURE_USER 环境变量。请注意，如果将 dfs.datanode.address 设置为特权端口，则无法在数据传输协议上使用 SASL。
+
+ssl-client.xml配置
+
+```xml
+<configuration>
+  <property>
+    <name>ssl.client.truststore.location</name>
+    <value>/usr/local/hadoop3/etc/hadoop/keystore.p12</value>
+    <description>Truststore to be used by clients like distcp. Must be specified.</description>
+  </property>
+  <property>
+    <name>ssl.client.truststore.password</name>
+    <value>123456</value>
+    <description>Optional. Default value is "".</description>
+  </property>
+  <property>
+    <name>ssl.client.truststore.type</name>
+    <value>pkcs12</value>
+    <description>Optional. The keystore file format, default value is "jks".</description>
+  </property>
+  <property>
+    <name>ssl.client.truststore.reload.interval</name>
+    <value>10000</value>
+    <description>Truststore reload check interval, in milliseconds. Default value is 10000 (10
+      seconds).</description>
+  </property>
+
+  <property>
+    <name>ssl.client.keystore.location</name>
+    <value>/usr/local/hadoop3/etc/hadoop/keystore.p12</value>
+    <description>Keystore to be used by clients like distcp. Must be specified.</description>
+  </property>
+  <property>
+    <name>ssl.client.keystore.password</name>
+    <value>123456</value>
+    <description>Optional. Default value is "".</description>
+  </property>
+  <property>
+    <name>ssl.client.keystore.keypassword</name>
+    <value>123456</value>
+    <description>Optional. Default value is "".</description>
+  </property>
+  <property>
+    <name>ssl.client.keystore.type</name>
+    <value>pkcs12</value>
+    <description>Optional. The keystore file format, default value is "jks".</description>
+  </property>
+</configuration>   
+```
+
+ssl-server.xml配置
+
+```xml
+<configuration>
+  <property>
+    <name>ssl.server.truststore.location</name>
+    <value>/usr/local/hadoop3/etc/hadoop/keystore.p12</value>
+    <description>Truststore to be used by NN and DN. Must be specified. </description>
+  </property>
+  <property>
+    <name>ssl.server.truststore.password</name>
+    <value>123456</value>
+    <description>Optional. Default value is "". </description>
+  </property>
+  <property>
+    <name>ssl.server.truststore.type</name>
+    <value>pkcs12</value>
+    <description>Optional. The keystore file format, default value is "jks". </description>
+  </property>
+  <property>
+    <name>ssl.server.truststore.reload.interval</name>
+    <value>10000</value>
+    <description>Truststore reload check interval, in milliseconds. Default value is 10000 (10
+      seconds). </description>
+  </property>
+
+  <property>
+    <name>ssl.server.keystore.location</name>
+    <value>/usr/local/hadoop3/etc/hadoop/keystore.p12</value>
+    <description>Keystore to be used by NN and DN. Must be specified. </description>
+  </property>
+  <property>
+    <name>ssl.server.keystore.password</name>
+    <value>123456</value>
+    <description>Must be specified. </description>
+  </property>
+  <property>
+    <name>ssl.server.keystore.keypassword</name>
+    <value>123456</value>
+    <description>Must be specified. </description>
+  </property>
+  <property>
+    <name>ssl.server.keystore.type</name>
+    <value>pkcs12</value>
+    <description>Optional. The keystore file format, default value is "jks". </description>
+  </property>
+  <property>
+    <name>ssl.server.exclude.cipher.list</name>
+    <value>TLS_ECDHE_RSA_WITH_RC4_128_SHA,SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA,
+      SSL_RSA_WITH_DES_CBC_SHA,SSL_DHE_RSA_WITH_DES_CBC_SHA,
+      SSL_RSA_EXPORT_WITH_RC4_40_MD5,SSL_RSA_EXPORT_WITH_DES40_CBC_SHA,
+      SSL_RSA_WITH_RC4_128_MD5</value>
+    <description>Optional. The weak security cipher suites that you want excluded from SSL
+      communication.</description>
+  </property>
 </configuration>
 ```
 
