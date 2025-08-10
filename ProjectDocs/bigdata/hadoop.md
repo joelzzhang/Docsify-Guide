@@ -469,7 +469,7 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
     <property>
         <name>yarn.nodemanager.local-dirs</name>
         <value>${hadoop.tmp.dir}/nm-local-dir</value>
-        <description>设置datanode节点存储数据文件的本地路径</description>
+        <description>存放运行容器时需要的所有本地临时文件的地方</description>
     </property>
     <property>
         <name>yarn.nodemanager.log-dirs</name>
@@ -775,6 +775,7 @@ export YARN_RESOURCEMANAGER_OPTS="-Djava.security.auth.login.config=/usr/local/h
 start-yarn.sh
 # 停止yarn集群
 stop-yarn.sh
+yarn --daemon start nodemanager
 ```
 
 验证集群：
@@ -783,6 +784,30 @@ stop-yarn.sh
 [root@bigdata01 hadoop3]# yarn rmadmin -getAllServiceState
 bigdata01:8033                                     active    
 bigdata02:8033                                     standby
+
+yarn node -status bigdata03.cn:45454
+Node Report : 
+	Node-Id : bigdata03.cn:45454
+	Rack : /default-rack
+	Node-State : RUNNING
+	Node-Http-Address : bigdata03.cn:8042
+	Last-Health-Update : 周日 10/8月/25 12:27:40:312CST
+	Health-Report : 
+	Containers : 0
+	Memory-Used : 0MB
+	Memory-Capacity : 4096MB
+	CPU-Used : 0 vcores
+	CPU-Capacity : 8 vcores
+	Node-Labels : 
+	Node Attributes : 
+	Resource Utilization by Node : PMem:1958 MB, VMem:1958 MB, VCores:1.6849817
+	Resource Utilization by Containers : PMem:0 MB, VMem:0 MB, VCores:0.0
+	
+yarn node -list -all
+Total Nodes:2
+         Node-Id	     Node-State	Node-Http-Address	Number-of-Running-Containers
+bigdata03.cn:45454	        RUNNING	bigdata03.cn:8042	                           0
+bigdata04.cn:45454	        RUNNING	bigdata04.cn:8042	                           0
 ```
 
 ### 8. 启动历史服务器
@@ -870,6 +895,9 @@ echo "123456" | sudo passwd --stdin mapred
    # slave节点
    chown -R hdfs:hadoop /data01/hdfs
    chmod -R 755 /data01/hdfs
+   #yarn nodemanager的存放运行容器时需要的所有本地临时文件的地方
+   chown -R yarn:hadoop /data/hadoop/nm-local-dir
+   chmod -R 755 /data/hadoop/nm-local-dir
    ```
 
 ### 3. 创建Hadoop服务Kerberos主体
