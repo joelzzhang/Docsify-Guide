@@ -11,6 +11,8 @@
 > https://k5wiki.kerberos.org/wiki/Projects/Hierarchical_iprop
 >
 > https://web.mit.edu/kerberos
+>
+> https://www.linuxfromscratch.org/blfs/view/svn/postlfs/mitkrb.html
 
 ### 1. 应用场景
 
@@ -497,6 +499,9 @@ kadmin.local:  xst -norandkey -k /var/kerberos/krb5kdc/keytab/admin.keytab  admi
 第五步：启动kdc slave节点的kpropd服务
 
 第六步：在kdc master上先dump再同步到slave
+
+kdb5_util dump /var/kerberos/krb5kdc/dump/slave_datatrans
+kprop -f /var/kerberos/krb5kdc/dump/slave_datatrans -s keytab/krb5.keytab  hadoop2
 
 第七步：重启kdc master的kadmin、krb5kdc服务
 

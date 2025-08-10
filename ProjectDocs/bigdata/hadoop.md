@@ -2,12 +2,12 @@
 
 ### 1. 环境规划
 
-| IP             | hostname  | 角色                                                         | 组件                                                         |
-| -------------- | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| 192.168.31.100 | bigdata01 | Zookeeper、JournalNode、NameNode、ResourceManager、ZKFC      | HDFS、YARN、Zookeeper                                        |
-| 192.168.31.101 | bigdata02 | Zookeeper、JournalNode、NameNode、ResourceManager、ZKFC、HistoryServer | HDFS、YARN、Zookeeper                                        |
-| 192.168.31.102 | bigdata03 | Zookeeper、JournalNode、DataNode  、NodeManager、KDC、JobHistoryServer | HDFS、YARN、Zookeeper、krb5-server、krb5-workstation、krb5-libs |
-| 192.168.31.103 | bigdata04 | DataNode 、NodeManager、KDC                                  | HDFS、YARN、krb5-server、krb5-workstation、krb5-libs         |
+| IP             | hostname     | 角色                                                         | 组件                                                         |
+| -------------- | ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 192.168.31.100 | bigdata01.cn | Zookeeper、JournalNode、NameNode、ResourceManager、ZKFC      | HDFS、YARN、Zookeeper                                        |
+| 192.168.31.101 | bigdata02.cn | Zookeeper、JournalNode、NameNode、ResourceManager、ZKFC、HistoryServer | HDFS、YARN、Zookeeper                                        |
+| 192.168.31.102 | bigdata03.cn | Zookeeper、JournalNode、DataNode  、NodeManager、KDC、JobHistoryServer | HDFS、YARN、Zookeeper、krb5-server、krb5-workstation、krb5-libs |
+| 192.168.31.103 | bigdata04.cn | DataNode 、NodeManager、KDC                                  | HDFS、YARN、krb5-server、krb5-workstation、krb5-libs         |
 
 ### 2. 安装包准备
 
@@ -1096,6 +1096,52 @@ echo "123456" | sudo passwd --stdin mapred
 >
 > 从 2.6.0 版开始，SASL 可用于验证数据传输协议。在此配置中，安全集群不再需要使用 jsvc 以 root 身份启动 DataNode 并绑定到特权端口。要在数据传输协议上启用 SASL，请在 hdfs-site.xml 中设置 dfs.data.transfer.protection，为 dfs.datanode.address 设置非特权端口，将 dfs.http.policy 设置为 HTTPS_ONLY，并确保未定义 HDFS_DATANODE_SECURE_USER 环境变量。请注意，如果将 dfs.datanode.address 设置为特权端口，则无法在数据传输协议上使用 SASL。
 
+SSL/TSL证书生成
+
+```bash
+keytool -genkeypair -keyalg RSA -keysize 2048 -sigalg SHA256withRSA -validity 36000 -alias $HOSTNAME -storetype pkcs12 -keystore keystore.p12 -storepass 123456 -keypass 123456 -dname "CN=$HOSTNAME,OU=$HOSTNAME,O=$HOSTNAME,L=BJ,ST=BJ,C=CN"
+keytool -certreq -alias "$HOSTNAME" -storetype pkcs12 -keystore keystore.p12 -storepass 123456 -file "$HOSTNAME".csr -v
+keytool -gencert -infile "$HOSTNAME".csr -outfile "$HOSTNAME"_sign.cer -alias "$HOSTNAME" -storetype pkcs12 -keystore keystore.p12 -storepass 123456
+keytool -importcert -noprompt -trustcacerts -alias "$HOSTNAME"_sign -file "$HOSTNAME"_sign.cer -keystore keystore.p12 -storetype pkcs12 -storepass 123456
+
+#生成自签证书的root ca
+openssl req -x509 -sha256 -days 3650 -newkey rsa:2048 -noenc -keyout rootCA.key -out rootCA.crt -subj "/CN=hadoop/OU=hadoop/O=hadoop/C=CN/L=BJ"
+#创建服务器私钥
+openssl genrsa -out server.key 2048
+#使用服务器私钥生成证书签名请求
+openssl req -new -key server.key -out server.csr -subj "/CN=$HOSTNAME/OU=$HOSTNAME/O=$HOSTNAME/C=CN/L=BJ"
+#使用自签名的CA生成SSL证书
+openssl x509 -req -in server.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out server.crt -days 365 -sha256 -subj "/CN=$HOSTNAME/OU=$HOSTNAME/O=$HOSTNAME/C=CN/L=BJ"
+
+keytool -importcert -trustcacerts -file server.crt -keystore keystore.p12 -storepass 123456 -keypass 123456 -alias $HOSTNAME -noprompt
+
+====================================================
+openssl req -x509 -sha256 -days 3650 -newkey rsa:2048 -noenc -keyout rootCA.key -out rootCA.crt -subj "/CN=root/OU=hadoop/O=hadoop/C=CN/L=BJ/ST=BJ"
+
+keytool -importcert -trustcacerts -file rootCA.crt -storetype pkcs12 -keystore truststore.p12 -storepass 123456 -keypass 123456 -alias CARoot -noprompt
+keytool -importcert -trustcacerts -file rootCA.crt -storetype pkcs12 -keystore keystore.p12 -storepass 123456 -keypass 123456 -alias CARoot -noprompt
+
+keytool -genkeypair -keyalg RSA -keysize 2048 -sigalg SHA256withRSA -validity 36000 -alias hdfs -storetype pkcs12 -keystore keystore.p12 -storepass 123456 -keypass 123456 -dname "CN=*.cn,OU=hdfs,O=hdfs,L=BJ,ST=BJ,C=CN"
+
+keytool -certreq -alias hdfs -storetype pkcs12 -keystore keystore.p12 -storepass 123456 -file cert.csr -v
+
+openssl x509 -req -CA rootCA.crt -CAkey rootCA.key -in cert.csr -out cert_signed.crt -days 36500 -CAcreateserial -subj "/CN=*.cn/OU=hdfs/O=hdfs/C=CN/L=BJ/ST=BJ"
+
+keytool -importcert -trustcacerts -file cert_signed.crt -keystore keystore.p12 -storepass 123456 -keypass 123456 -alias hdfs_cert -noprompt
+====================================================
+
+keytool -importcert -trustcacerts -file ./singed/bigdata03_cert_signed.crt -keystore keystore.p12 -storepass 123456 -keypass 123456 -alias bigdata03 -noprompt
+
+keytool -importkeystore -srckeystore ./keystore/keystore.p12 -destkeystore keystore.p12 -deststoretype pkcs12 -destkeypass 123456 -deststorepass 123456 -srcstorepass 123456
+
+keytool -list -v -keystore keystore.p12 -storepass 123456
+
+keytool -printcert -file "$HOSTNAME"_cert_signed.crt
+rm -rf /usr/local/hadoop3/etc/hadoop/cert/*
+scp "$HOSTNAME"_cert_signed.crt bigdata01:/usr/local/hadoop3/etc/hadoop/cert/singed
+rm -rf /var/log/hadoop/hadoop-hdfs/*
+```
+
 ssl-client.xml配置
 
 ```xml
@@ -1202,6 +1248,15 @@ ssl-server.xml配置
   </property>
 </configuration>
 ```
+
+整合Kerberos后，通过`hdfs dfs -ls /`命令验证时报错，通过在`hadoop-env.sh`中添加`export HADOOP_ROOT_LOGGER=DEBUG,console export HADOOP_OPTS="-Dsun.security.krb5.debug=true -Djavax.net.debug=ssl"` 后可以看到更多日志，报错日志如下：
+
+```tex
+2025-08-06 00:55:04,891 WARN ipc.Client: Exception encountered while connecting to the server bigdata01/192.168.31.100:54310
+org.apache.hadoop.security.AccessControlException: Client cannot authenticate via:[TOKEN, KERBEROS]
+```
+
+排查发现是当前使用的Kerberos完成认证后默认缓到`Ticket cache: KCM:1001`中，而在hdfs客户端日志中看到`KinitOptions cache name is /tmp/krb5cc_1001`，通常可以通过注释`krb5.conf`中的`default_ccache_name`可以解决，也可以通过`kinit -c /tmp/krb5cc_$UID`解决，注意要把`/etc/krb5.conf`文件的`includedir /etc/krb5.conf.d/`注释掉，`/etc/krb5.conf.d`下配置的Kerberos缓存默认为KMC
 
 ### 6. 配置yarn-site.xml
 
