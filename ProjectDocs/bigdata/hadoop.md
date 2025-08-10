@@ -496,18 +496,18 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
         <description>在RM（资源管理器）中，每个容器请求的最小分配为MB。低于此值的内存请求将被设置为该属性的值。此外，配置为具有低于此值的内存的节点管理器将被资源管理器关闭。</description>
     </property>
     <property>
-        <name>yarn.nodemanager.vmem-check-enabled</name>
-        <value>false</value>
-        <description>是否会对容器强制执行虚拟内存限制。</description>
-    </property>
-    <property>
         <name>yarn.scheduler.maximum-allocation-mb</name>
         <value>4096</value>
         <description>在RM中，每个容器请求的最大分配为MB。内存请求超过这个值将抛出InvalidResourceRequestException异常。</description>
     </property>
     <property>
+        <name>yarn.nodemanager.vmem-check-enabled</name>
+        <value>false</value>
+        <description>是否会对容器强制执行虚拟内存限制。</description>
+    </property>
+    <property>
         <name>yarn.nodemanager.resource.cpu-vcores</name>
-        <value>8</value>
+        <value>4</value>
         <description>容器可分配的vcore数量。资源管理器调度器在为容器分配资源时使用此数量。这不会用于限制YARN容器使用的CPU数量。在其他情况下，vcore数量默认为8。</description>
     </property>
     <property>
@@ -518,7 +518,7 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
     </property>
     <property>
         <name>yarn.scheduler.maximum-allocation-vcores</name>
-        <value>8</value>
+        <value>4</value>
         <description>在RM（资源管理器）中，每个容器请求的虚拟CPU核心的最大分配。高于此值的请求将抛出InvalidResourceRequestException异常。</description>
     </property>
 
@@ -1329,6 +1329,24 @@ org.apache.hadoop.security.AccessControlException: Client cannot authenticate vi
     </property>
 </configuration>
 ```
+
+使用LinuxContainerExecutor有一些注意事项：
+
+1、/usr/local/hadoop3/etc/hadoop/container-executor.cfg文件的权限只能由root账号读写
+
+2、/usr/local/hadoop3/bin/container-executor文件的权限为6050
+
+3、/usr/local/hadoop3/etc/hadoop/container-executor.cfg文件配置如下内容：
+
+```
+yarn.nodemanager.linux-container-executor.group=hadoop
+banned.users=hdfs,yarn,mapred,bin
+min.user.id=1000
+allowed.system.users=
+feature.tc.enabled=false
+```
+
+4、/usr/local/hadoop3/bin/container-executor脚本依赖libcrypto.so.1.1库，需要在/usr/lib64下面添加libcrypto.so.1.1文件
 
 ### 7. 配置mapred-site.xml 
 
