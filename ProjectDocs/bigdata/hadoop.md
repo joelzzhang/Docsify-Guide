@@ -329,9 +329,49 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
 ```xml
 <configuration>
     <property>
+        <name>yarn.webapp.ui2.enable</name>
+        <value>true</value>
+        <description>启用RM web ui2应用程序</description>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.webapp.cross-origin.enabled</name>
+        <value>true</value>
+        <description>在RM中启用跨源(CORS)支持</description>
+    </property>
+    <property>
         <name>yarn.resourcemanager.recovery.enabled</name>
         <value>true</value>
         <description>启用自动恢复</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.recovery.enabled</name>
+        <value>true</value>
+        <description>启动后启用节点管理器以进行恢复</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.recovery.dir</name>
+        <value>/var/log/hadoop/nodemanager/recovery-state</value>
+        <description>启用恢复时节点管理器将在其中存储状态的本地文件系统目录</description>
+    </property>
+    <property>
+        <name>yarn.node-labels.enabled</name>
+        <value>true</value>
+        <description>启用节点标签功能</description>
+    </property>
+    <property>
+        <name>yarn.node-labels.fs-store.root-dir</name>
+        <value>/system/yarn/node-labels</value>
+        <description>节点标签hdfs存储路径</description>
+    </property>
+    <property>
+        <name>hadoop.http.authentication.simple.anonymous.allowed</name>
+        <value>false</value>
+        <description>是否允许匿名访问</description>
+    </property>
+    <property>
+        <name>hadoop.http.filter.initializers</name>
+        <value>org.apache.hadoop.security.AuthenticationFilterInitializer</value>
+        <description>认证的类</description>
     </property>
     <property>
         <name>yarn.resourcemanager.store.class</name>
@@ -353,7 +393,14 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
     <property>
         <name>yarn.resourcemanager.cluster-id</name>
         <value>rm</value>
-        <description>声明两台 resourcemanager 的地址</description>
+        <description>标识集群中的RM</description>
+    </property>
+    
+    
+    <property>
+        <name>hadoop.zk.address</name>
+        <value>jxmaster01:2181,jxmaster03:2181,jxmaster02:2181</value>
+        <description>Zookeeper地址, 形如[HOST:PORT], 逗号分隔</description>
     </property>
 
     <property>
@@ -419,21 +466,23 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
     <property>
         <name>yarn.nodemanager.address</name>
         <value>0.0.0.0:45454</value>
+        <description>NodeManager中容器管理的地址</description>
     </property>
 
     <property>
         <name>yarn.nodemanager.aux-services</name>
         <value>mapreduce_shuffle,spark_shuffle</value>
-        <description></description>
+        <description>用于指定混洗技术</description>
     </property>
     <property>
         <name>yarn.nodemanager.aux-services.mapreduce_shuffle.class</name>
         <value>org.apache.hadoop.mapred.ShuffleHandler</value>
-        <description></description>
+        <description>用于指定mapreduce_shuffle混洗技术对应的类</description>
     </property>
     <property>
         <name>yarn.nodemanager.aux-services.spark_shuffle.class</name>
         <value>org.apache.spark.network.yarn.YarnShuffleService</value>
+        <description>用于指定spark_shuffle混洗技术对应的类</description>
     </property>
 
     <property>
@@ -449,41 +498,59 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
     <property>
         <name>yarn.nodemanager.log.retain-seconds</name>
         <value>604800</value>
+        <description>保留用户日志的时间</description>
     </property>
     <property>
         <name>yarn.log-aggregation.retain-seconds</name>
         <value>604800</value>
-        <description>设置日志保留时间为 7 天</description>
+        <description>在删除聚合日志之前保留多长时间，设置日志保留时间为 7 天</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.log-aggregation.roll-monitoring-interval-seconds</name>
+        <value>3600</value>
+        <description>定义NM唤醒上载日志文件的频率</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.log-aggregation.num-log-files-per-app</name>
+        <value>30</value>
+        <description>每个application进行聚合的日志的最大个数</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.log-aggregation.debug-enabled</name>
+        <value>false</value>
+        <description>nodemanager日志聚合debug信息</description>
     </property>
 
     <property>
-        <description>Where to aggregate logs to.(hdfs)</description>
         <name>yarn.nodemanager.remote-app-log-dir</name>
         <value>/yarn/apps</value>
+        <description>Where to aggregate logs to.(hdfs)，yarn日志hdfs存储路径</description>
     </property>
     <property>
-        <description>Where to aggregate logs to.</description>
         <name>yarn.nodemanager.remote-app-log-dir-suffix</name>
         <value>logs</value>
+        <description>Where to aggregate logs to.远程日志目录后缀</description>
     </property>
     <property>
         <name>yarn.nodemanager.local-dirs</name>
         <value>${hadoop.tmp.dir}/nm-local-dir</value>
-        <description>存放运行容器时需要的所有本地临时文件的地方</description>
+        <description>Nodemanager本地数据盘存储目录, 使用逗号分隔，存放运行容器时需要的所有本地临时文件的地方</description>
     </property>
     <property>
         <name>yarn.nodemanager.log-dirs</name>
         <value>${yarn.log.dir}/userlogs</value>
-        <description>namenode元数据存放位置</description>
+        <description>Nodemanager本地数据盘日志存储目录, 使用逗号分隔, 一般个数与{nm_local-dirs}对应</description>
     </property>
     <property>
         <name>yarn.application.classpath</name>
         <value>
             /etc/hadoop/conf,/usr/local/hadoop3/share/hadoop/mapreduce/*,/usr/local/hadoop3/share/hadoop/mapreduce/lib/*,/usr/local/hadoop3/share/hadoop/common/*,/usr/local/hadoop3/share/hadoop/common/lib/*,/usr/local/hadoop3/share/hadoop/yarn/*,/usr/local/hadoop3/share/hadoop/yarn/lib/*,/usr/local/hadoop3/share/hadoop/hdfs/*,/usr/local/hadoop3/share/hadoop/hdfs/lib/*,/usr/lib/hadoop/lib/*</value>
+        <description>YARN应用程序的CLASSPATH</description>
     </property>
     <property>
         <name>yarn.resourcemanager.scheduler.class</name>
         <value>org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler</value>
+        <description>用作资源调度程序的类</description>
     </property>
     <property>
         <name>yarn.nodemanager.resource.memory-mb</name>
@@ -521,18 +588,56 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
         <value>4</value>
         <description>在RM（资源管理器）中，每个容器请求的虚拟CPU核心的最大分配。高于此值的请求将抛出InvalidResourceRequestException异常。</description>
     </property>
+    <property>
+        <name>yarn.nodemanager.resourcemanager.connect.wait.secs</name>
+        <value>1800</value>
+        <description>等待NM连接到RM的时间</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.resource.percentage-physical-cpu-limit</name>
+        <value>100</value>
+        <description>可以为容器分配的CPU百分比</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.recovery.supervised</name>
+        <value>true</value>
+        <description>nodemanager是否在监督下运行。支持恢复并在监督下运行的节点管理器将不会尝试清理容器, 因为它会立即重新启动并恢复容器</description>
+    </property>
 
     <property>
         <name>yarn.acl.enable</name>
         <value>true</value>
+        <description>是否开启yarn的权限控制开关</description>
     </property>
     <property>
         <name>yarn.nodemanager.webapp.cross-origin.enabled</name>
         <value>true</value>
+        <description>标记以在NM中启用跨源(CORS)支持</description>
     </property>
     <property>
         <name>yarn.nodemanager.log-aggregation.compression-type</name>
         <value>gz</value>
+        <description>用于压缩聚合日志的T文件压缩类型</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.localizer.fetch.thread-count</name>
+        <value>12</value>
+        <description>用于本地化提取的线程数</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.localizer.client.thread-count</name>
+        <value>13</value>
+        <description>处理本地化请求的线程数</description>
+    </property>
+    <property>
+        <name>yarn.nodemanager.vmem-pmem-ratio</name>
+        <value>2.1</value>
+        <description>设置容器的内存限制时虚拟内存与物理内存之间的比率。容器分配以物理内存表示, 允许虚拟内存使用量超过此分配</description>
+    </property>
+    
+    <property>
+        <name>yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage</name>
+        <value>95.0</value>
     </property>
 
     <property>
@@ -1291,6 +1396,11 @@ org.apache.hadoop.security.AccessControlException: Client cannot authenticate vi
 ```xml
 <configuration>
     <property>
+        <name>hadoop.registry.client.auth</name>
+        <value>kerberos</value>
+        <description>客户端认证方式</description>
+    </property>
+    <property>
         <name>yarn.resourcemanager.principal</name>
         <value>yarn/_HOST@HADOOP.COM</value>
         <description>ResourceManager服务的Kerberos主体</description>
@@ -1314,6 +1424,7 @@ org.apache.hadoop.security.AccessControlException: Client cannot authenticate vi
     <property>
         <name>yarn.nodemanager.container-executor.class</name>
         <value>org.apache.hadoop.yarn.server.nodemanager.LinuxContainerExecutor</value>
+        <description>执行(启动)容器的类</description>
     </property>
   	<property>
     	<name>yarn.nodemanager.linux-container-executor.group</name>
