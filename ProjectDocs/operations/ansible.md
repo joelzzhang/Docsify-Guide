@@ -241,15 +241,15 @@ atlanta:
 
 ```ini
 ansible
-├── add_hosts.yml			#具体任务
+├── add_hosts.yml			#每一个剧本，具体调用哪一个role，可以同时调用多个role
 ├── group_vars				#变量
-└── roles					#角色
+└── roles					#角色集合
     └── add_hosts			#具体角色
-        ├── files
-        ├── handlers
-        ├── tasks
-        │   └── main.yml 	#任务
-        ├── templates
-        └── vars
+        ├── files			#放静态文件
+        ├── handlers		#也是一个任务，只是该任务不会主动执行，需通过notify来调用
+        ├── tasks			#任务集合
+        │   └── main.yml 	#具体每一个任务
+        ├── templates		#放模板配置文件，遵循Jinja2语法
+        └── vars			#放参数变量
 ```
 

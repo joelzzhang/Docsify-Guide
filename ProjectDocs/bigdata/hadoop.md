@@ -635,10 +635,6 @@ export HDFS_ZKFC_OPTS="-Djava.security.auth.login.config=/usr/local/hadoop3/etc/
         <description>设置容器的内存限制时虚拟内存与物理内存之间的比率。容器分配以物理内存表示, 允许虚拟内存使用量超过此分配</description>
     </property>
     
-    <property>
-        <name>yarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage</name>
-        <value>95.0</value>
-    </property>
 
     <property>
         <name>yarn.nodemanager.env-whitelist</name>
