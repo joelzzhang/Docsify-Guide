@@ -20,6 +20,7 @@
 * JAVA开发手册
   *  [Java环境配置](ProjectDocs/java/java.md)
   *  [Spring源码解读](ProjectDocs/java/spring.md)
+  *  [Jvm优化](ProjectDocs/java/jvm.md)
 * Python开发手册
   *  [Python语法](ProjectDocs/python/mac.md)
 * PAAS组件知识点
