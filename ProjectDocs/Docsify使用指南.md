@@ -17,7 +17,21 @@ win+r：cmd进入命令提示符窗口，分别输入以下命令查看node和np
 
 ![image-20211001044742251](images/image-20211001044742251.png)
 
-
+## Linux下安装nodejs
+- 上传nodejs二进制包并解压
+``` shell
+  mkdir /opt/nodejs-26.16
+  tar -xJf node-v24.16.0-linux-x64.tar.xz -C /opt/nodejs-26.16 --strip-components=1
+ ```
+- 配置环境变量或软连接
+``` shell
+  export NODE_HOME=/opt/nodejs-26.16
+  export PATH=$NODE_HOME/bin:$PATH
+  #或
+  ln -sf /opt/nodejs-26.16/bin/node /usr/bin/node
+  ln -sf /opt/nodejs-26.16/bin/npm /usr/bin/npm
+  ln -sf /opt/nodejs-26.16/bin/npx /usr/bin/npx
+ ```
 
 ## docsify-cli工具安装
 
