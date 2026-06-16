@@ -6,6 +6,7 @@
 * 运维手册
   *  [Linux时钟同步](ProjectDocs/operations/time-sync.md)
   *  [Linux磁盘管理](ProjectDocs/operations/linux-disk.md)
+  *  [Linux权限管理](ProjectDocs/operations/linux.md)
   *  [Prometheus部署](ProjectDocs/operations/prometheus.md)
   *  [Grafana使用手册](ProjectDocs/operations/grafana.md)
   *  [Ansible自动化运维](ProjectDocs/operations/ansible.md)
