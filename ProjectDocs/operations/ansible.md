@@ -362,11 +362,8 @@ ansible
   ansible-vault create --vault-id prod@prompt vars/prod/secrets.yml
   
   # 运行测试环境（只用测试密码）
-  ansible-playbook -i inventory.ini site.yml \
-    --vault-id test@prompt
+  ansible-playbook -i inventory.ini site.yml --vault-id test@prompt
   
   # 生产环境（测试密码 + 生产密码）
-  ansible-playbook -i inventory.ini site.yml \
-    --vault-id test@prompt \
-    --vault-id prod@prompt
+  ansible-playbook -i inventory.ini site.yml --vault-id test@prompt --vault-id prod@prompt
   ```
