@@ -241,15 +241,132 @@ atlanta:
 
 ```ini
 ansible
-├── add_hosts.yml			#每一个剧本，具体调用哪一个role，可以同时调用多个role
-├── group_vars				#变量
-└── roles					#角色集合
-    └── add_hosts			#具体角色
-        ├── files			#放静态文件
-        ├── handlers		#也是一个任务，只是该任务不会主动执行，需通过notify来调用
-        ├── tasks			#任务集合
-        │   └── main.yml 	#具体每一个任务
-        ├── templates		#放模板配置文件，遵循Jinja2语法
-        └── vars			#放参数变量
+├── group_vars              #inventory.ini里面主机分组的变量
+│   ├── all.yml
+│   └── localtest.yml
+├── inventory.ini
+├── linux_filebeat.yml     #每一个剧本，具体调用哪一个role，可以同时调用多个role
+└── roles                  #角色集合
+    └── linux_filebeat     #具体角色
+        ├── defaults       #放参数变量,优先级低于vars下面的变量,且可以被-e参数覆盖
+        │   └── main.yml
+        ├── files          #放静态文件
+        │   └── filebeat-9.2.4-linux-x86_64.tar.gz
+        ├── handlers       #也是一个任务，只是该任务不会主动执行，需通过notify来调用
+        │   └── main.yml
+        ├── meta
+        │   └── main.yml
+        ├── README.md
+        ├── tasks          #任务集合
+        │   └── main.yml
+        ├── templates      #放模板配置文件，遵循Jinja2语法
+        │   └── filebeat.yml.j2
+        ├── tests
+        │   ├── inventory
+        │   └── test.yml
+        └── vars          #放参数变量,优先级高于defaults下面的变量
+            ├── main.yml
+            └── secrets.yml
 ```
 
+## 五.Ansible Vault使用
+
+- 为什么需要 Vault？
+
+  Playbook 里写了数据库密码 `password: "MySecret123"`，直接提交到 Git，密码泄露。Vault 就是来解决这个问题的：**把敏感文件加密成二进制，只有输入密码才能查看和执行**。
+
+- 创建加密文件
+
+  ```shell
+  # 交互式创建加密文件（会提示输入密码，两次确认）
+  ansible-vault create vars/secrets.yml
+  
+  # 加密已有文件
+  ansible-vault encrypt vars/secrets.yml
+  ```
+
+- 编辑加密文件
+
+  ```shell
+  # 编辑加密文件
+  ansible-vault edit vars/secrets.yml
+  ---
+  db_root_password: "R#8sLmN!2kxZ"
+  db_user_password: "P@9wQ$7vBn4m"
+  aws_access_key: "AKIAIOSFODNN7EXAMPLE"
+  aws_secret_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  
+  #查看加密后的文件内容
+  cat vars/secrets.yml
+  $ANSIBLE_VAULT;1.1;AES256
+  616464726573730a31323334353637383930...
+  ```
+
+- 查看加密文件
+
+  ```shell
+  # 查看加密文件（需要密码）
+  ansible-vault view vars/secrets.yml
+  ---
+  db_root_password: "R#8sLmN!2kxZ"
+  db_user_password: "P@9wQ$7vBn4m"
+  aws_access_key: "AKIAIOSFODNN7EXAMPLE"
+  aws_secret_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  ```
+
+- 在 Playbook 中使用加密变量
+
+  ansible-playbook默认只会加载`tasks/main.yml`、`handlers/main.yml`、`defaults/main.yml`、`meta/main.yml`、`vars/main.yml`等文件，`vars/secrets.yml`这个文件需要显式加载，否则使用变量参数时会报错:`The error was: 'db_root_password' is undefined`，显示加载有2种方式：
+
+  ```yaml
+  #第一种在playbook里面添加vars_files参数，secrets.yml路径是相对于playbook的相对路径
+  ---
+  - name: linux user ops
+    hosts: hadoop
+    gather_facts: yes
+    become: true
+    vars_files:
+      - roles/linux_filebeat/vars/secrets.yml # 自动解密使用
+    roles:
+      - linux_filebeat
+  #第二种在task的main.yml最开始添加include_vars任务
+  - name: 加载 role 变量（含 vault 加密变量）
+    ansible.builtin.include_vars:
+      dir: "{{ role_path }}/vars"
+      extensions:
+        - yml
+        - yaml
+  ```
+
+  运行加密 Playbook：三种方式
+
+  ```shell
+  # 方式1：运行时输入密码（推荐）
+  ansible-playbook -i inventory.ini site.yml --ask-vault-pass
+  
+  # 方式2：用密码文件（团队共享，注意文件权限）
+  ansible-playbook -i inventory.ini site.yml --vault-password-file ~/.vault_pass
+  
+  # 方式3：环境变量（CI/CD 场景）
+  export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass
+  ansible-playbook -i inventory.ini site.yml
+  ```
+
+- 多密码管理：Vault ID
+
+  一个项目可能有不同环境的密码（测试环境/生产环境），用 Vault ID 区分：
+
+  ```shell
+  # 创建不同环境的加密文件
+  ansible-vault create --vault-id test@prompt vars/test/secrets.yml
+  ansible-vault create --vault-id prod@prompt vars/prod/secrets.yml
+  
+  # 运行测试环境（只用测试密码）
+  ansible-playbook -i inventory.ini site.yml \
+    --vault-id test@prompt
+  
+  # 生产环境（测试密码 + 生产密码）
+  ansible-playbook -i inventory.ini site.yml \
+    --vault-id test@prompt \
+    --vault-id prod@prompt
+  ```
