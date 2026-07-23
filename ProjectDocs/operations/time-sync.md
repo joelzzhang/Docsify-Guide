@@ -197,6 +197,9 @@ remote           refid      			st 	t when poll reach  delay   	offset  jitter
    #将所有server都注释掉
    #iburst表示的是首次同步的时候快速同步
    # server 3.centos.pool.ntp.org iburst
+   #如果需要内网建立主备时钟服务器则打开以下配置，假设本节点为192.168.1.100，则192.168.1.101为备节点
+   #prefer最高优先权：如果配置了多个时间服务器，系统在挑选时会优先采用带有该标记的服务器来校准本地时间。
+   # server 192.168.1.101 iburst prefer
    
    #根据实际时间计算出服务器增减时间的比率，然后记录到一个文件中，在系统重启后为系统做出最佳时间补偿调整。
    driftfile /var/lib/chrony/drift
@@ -210,9 +213,16 @@ remote           refid      			st 	t when poll reach  delay   	offset  jitter
    allow 192.168.0.0/16
    allow
    
+   #makestep <threshold> <limit>
+   #threshold单位为秒。当本地时钟与 NTP 时间源的偏差超过这个值时，允许立即跳变。
+   #<limit>：允许 step 的最大次数，或设为 -1 表示无限次
+   makestep 1.0 3
+   
    #打开local stratum 10注释 即使server端无法从互联网同步时间，也同步本机时间至client
    # Serve time even if not synchronized to a time source.
    local stratum 10
+   
+   logdir /var/log/chrony
    ```
 
    服务端只修改以上配置即可，其他的保持不变。
